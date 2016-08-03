@@ -83,7 +83,7 @@ static struct clock_event_device nc_ced = {
 	.set_state_periodic	= nc_timer_set_periodic,
 };
 
-static void __init nc_timer_init(struct device_node *np)
+static int __init nc_timer_init(struct device_node *np)
 {
 	unsigned int irq;
 	unsigned int freq;
@@ -109,6 +109,8 @@ static void __init nc_timer_init(struct device_node *np)
 
 	/* register */
 	clockevents_config_and_register(&nc_ced, freq, 1, ULONG_MAX);
+
+	return 0;
 }
 CLOCKSOURCE_OF_DECLARE(nc_timer, "nationalchip,timer-v1", nc_timer_init);
 
