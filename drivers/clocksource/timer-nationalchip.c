@@ -111,7 +111,6 @@ static int nc_csd_enable(struct clocksource *unused)
 	return 0;
 }
 
-
 static void nc_csd_disable(struct clocksource *unused)
 {
 	__raw_writel(0x0, NC_VA_COUNTER_2_CONTROL);
