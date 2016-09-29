@@ -17,9 +17,6 @@
 #include <linux/of_address.h>
 #include <linux/of_irq.h>
 
-#define IO_VA_BASE			(0xA0000000)
-#define NC_PA_COUNTER			(0x0020A000)
-
 #define NC_VA_COUNTER_1_STATUS		(void *)(timer_reg + 0x00)
 #define NC_VA_COUNTER_1_VALUE		(void *)(timer_reg + 0x04)
 #define NC_VA_COUNTER_1_CONTROL		(void *)(timer_reg + 0x10)
@@ -43,13 +40,10 @@ static unsigned int timer_reg;
 
 static inline void timer_reset(void)
 {
-	__raw_writel(0x1, NC_VA_COUNTER_1_CONTROL);
-	__raw_writel(0x0, NC_VA_COUNTER_1_CONTROL);
-	__raw_writel(0x3, NC_VA_COUNTER_1_CONFIG);
-
-	__raw_writel(26,NC_VA_COUNTER_1_PRE);
-	__raw_writel(0xFFFFD8EF,NC_VA_COUNTER_1_INI);
-	__raw_writel(0x2, NC_VA_COUNTER_1_CONTROL);
+	__raw_writel(0x1,	NC_VA_COUNTER_1_CONTROL);
+	__raw_writel(0x0,	NC_VA_COUNTER_1_CONTROL);
+	__raw_writel(0x3,	NC_VA_COUNTER_1_CONFIG);
+	__raw_writel(26,	NC_VA_COUNTER_1_PRE);
 }
 
 static irqreturn_t timer_interrupt(int irq, void *dev_id)
@@ -66,21 +60,72 @@ static irqreturn_t timer_interrupt(int irq, void *dev_id)
 static int nc_timer_set_periodic(struct clock_event_device *dev)
 {
 	timer_reset();
+
+	__raw_writel(0xFFFFD8EF, NC_VA_COUNTER_1_INI);
+	__raw_writel(0x2, NC_VA_COUNTER_1_CONTROL);
+
+	return 0;
+}
+
+static int nc_timer_set_next_event(unsigned long delta, struct clock_event_device *evt)
+{
+	__raw_writel(0x1,		NC_VA_COUNTER_1_CONTROL);
+	__raw_writel(ULONG_MAX - delta, NC_VA_COUNTER_1_INI);
+	__raw_writel(0x2,		NC_VA_COUNTER_1_CONTROL);
 	return 0;
 }
 
 static int nc_timer_shutdown(struct clock_event_device *dev)
 {
-	timer_reset();
+	__raw_writel(0x0, NC_VA_COUNTER_1_CONTROL);
+	__raw_writel(0x0, NC_VA_COUNTER_1_CONFIG);
+
 	return 0;
 }
 
 static struct clock_event_device nc_ced = {
 	.name			= "nationalchip-clkevent",
-	.features		= CLOCK_EVT_FEAT_PERIODIC,
+	.features		= CLOCK_EVT_FEAT_PERIODIC
+				| CLOCK_EVT_FEAT_ONESHOT,
 	.rating			= 200,
 	.set_state_shutdown	= nc_timer_shutdown,
 	.set_state_periodic	= nc_timer_set_periodic,
+	.set_next_event		= nc_timer_set_next_event,
+};
+
+static cycle_t notrace nc_csd_read(struct clocksource *unused)
+{
+	return (cycle_t) __raw_readl(NC_VA_COUNTER_2_VALUE);
+}
+
+static int nc_csd_enable(struct clocksource *unused)
+{
+	__raw_writel(0x1, NC_VA_COUNTER_2_CONTROL);
+	__raw_writel(0x0, NC_VA_COUNTER_2_CONTROL);
+	__raw_writel(0x1, NC_VA_COUNTER_2_CONFIG);
+
+	__raw_writel(26,NC_VA_COUNTER_2_PRE);
+	__raw_writel(0, NC_VA_COUNTER_2_INI);
+	__raw_writel(0x2, NC_VA_COUNTER_2_CONTROL);
+
+	return 0;
+}
+
+
+static void nc_csd_disable(struct clocksource *unused)
+{
+	__raw_writel(0x0, NC_VA_COUNTER_2_CONTROL);
+	__raw_writel(0x0, NC_VA_COUNTER_2_CONFIG);
+}
+
+static struct clocksource nc_csd = {
+	.name			= "nationalchip-clksource",
+	.rating			= 300,
+	.read			= nc_csd_read,
+	.enable			= nc_csd_enable,
+	.disable		= nc_csd_disable,
+	.mask			= CLOCKSOURCE_MASK(32),
+	.flags			= CLOCK_SOURCE_IS_CONTINUOUS,
 };
 
 static int __init nc_timer_init(struct device_node *np)
@@ -109,6 +154,8 @@ static int __init nc_timer_init(struct device_node *np)
 
 	/* register */
 	clockevents_config_and_register(&nc_ced, freq, 1, ULONG_MAX);
+
+	clocksource_register_hz(&nc_csd, freq);
 
 	return 0;
 }
