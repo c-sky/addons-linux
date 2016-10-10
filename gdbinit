@@ -1,4 +1,5 @@
 tar jtag jtag://127.0.0.1:1025
+reset
 
 # setup CCR (Cache Config Reg)
 # 0-1:MP,2:IE,3:DE,4:WB,5:RS,6:Z,7:BE 
