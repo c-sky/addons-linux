@@ -1,3 +1,19 @@
 config NATIONALCHIP_ETH
-	bool "nationalchip eth"
+	bool
+	default n
+
+config NATIONALCHIP_IRQ
+	bool
+	default n
+
+config NATIONALCHIP_TIMER
+	bool
+	default n
+
+config NATIONALCHIP
+	bool "nationalchip drivers"
+	default n
+	select NATIONALCHIP_ETH
+	select NATIONALCHIP_IRQ
+	select NATIONALCHIP_TIMER
 
