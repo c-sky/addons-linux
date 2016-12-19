@@ -1,0 +1,3 @@
+config SILAN
+	bool "silan drivers"
+	default n

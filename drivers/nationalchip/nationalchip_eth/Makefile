@@ -20,9 +20,7 @@
 #	rm -rf .built*
 #	rm -rf .tmp*
 	
-
-obj-y += synop_GMAC_ether.o
-synop_GMAC_ether-objs = synopGMAC_Host.o synopGMAC_plat.o synopGMAC_network_interface.o synopGMAC_Dev.o 
+obj-$(CONFIG_NATIONALCHIP_ETH) += synopGMAC_Host.o synopGMAC_plat.o synopGMAC_network_interface.o synopGMAC_Dev.o 
 
 ####################################################
 # Explanation for EXTRA_FLAGS

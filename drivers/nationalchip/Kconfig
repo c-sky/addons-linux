@@ -1,0 +1,5 @@
+menu "Nationalchip drivers"
+
+source addons/drivers/nationalchip/nationalchip_eth/Kconfig
+
+endmenu

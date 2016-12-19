@@ -1,19 +1,4 @@
-config NATIONALCHIP_ETH
-	bool
-	default n
-
-config NATIONALCHIP_IRQ
-	bool
-	default n
-
-config NATIONALCHIP_TIMER
-	bool
-	default n
-
-config NATIONALCHIP
-	bool "nationalchip drivers"
-	default n
-	select NATIONALCHIP_ETH
-	select NATIONALCHIP_IRQ
-	select NATIONALCHIP_TIMER
-
+source addons/drivers/clocksource/Kconfig
+source addons/drivers/irqchip/Kconfig
+source addons/drivers/nationalchip/Kconfig
+source addons/drivers/silan/Kconfig

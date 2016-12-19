@@ -41,7 +41,7 @@
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/device.h>
-
+#include <linux/of.h>
 #include <linux/platform_device.h>
 
 #include <linux/netdevice.h>
@@ -113,6 +113,7 @@ static int mac_synopsis_drv_probe(struct platform_device *pdev)
 		return retval;
 	}
 
+	synopGMACadapter->synopGMACpcidev = pdev;
 	return 0;
 }
 
@@ -136,7 +137,12 @@ static int mac_synopsis_drv_remove(struct platform_device *pdev)
 extern int mac_synopsis_drv_suspend(struct platform_device *pdev, pm_message_t state);
 extern int mac_synopsis_drv_resume(struct platform_device *pdev);
 
-#define MAC_NAME "mac_synopsis"
+#define MAC_NAME "nationalchip-eth"
+
+static const struct of_device_id nc_eth_ids[] = {
+	{ .compatible = "nationalchip-eth"},
+	{}
+};
 
 MODULE_ALIAS(MAC_NAME);
 static struct platform_driver mac_synopsis_driver = {
@@ -148,7 +154,8 @@ static struct platform_driver mac_synopsis_driver = {
 #endif
 	.driver = {
 		.name = MAC_NAME ,
-		.bus = &platform_bus_type
+		.bus = &platform_bus_type,
+		.of_match_table = nc_eth_ids
 	}
 };
 
@@ -194,12 +201,6 @@ static int __init SynopGMAC_Host_Interface_init(void)
 {
 	int retval;
 
-	mac_synopsis_resources[1].start = synopGMAC_mac_irq;
-
-	synopGMACpcidev = &gx_mac_synopsis_device;
-
-	platform_device_register(synopGMACpcidev);
-
 	retval = platform_driver_register(&mac_synopsis_driver);
 	if (retval < 0)
 		return retval;
@@ -210,7 +211,7 @@ static int __init SynopGMAC_Host_Interface_init(void)
 static void __exit SynopGMAC_Host_Interface_exit(void)
 {
 	platform_driver_unregister(&mac_synopsis_driver);
-	platform_device_unregister(synopGMACpcidev);
+//	platform_device_unregister(synopGMACpcidev);
 }
 
 module_init(SynopGMAC_Host_Interface_init);

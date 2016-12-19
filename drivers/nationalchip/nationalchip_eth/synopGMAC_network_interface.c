@@ -2239,6 +2239,8 @@ s32 synopGMAC_linux_open(struct net_device *netdev)
 	synopGMACdevice * gmacdev_ch2;
 #endif
 	struct platform_device *pcidev;
+	int irq;
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,32)
 	adapter = (synopGMACPciNetworkAdapter *) netdev->priv;
 #else
@@ -2253,6 +2255,11 @@ s32 synopGMAC_linux_open(struct net_device *netdev)
 
 	pcidev  = (struct platform_device *)adapter->synopGMACpcidev;
 
+	irq = platform_get_irq(pcidev, 0);
+	if (irq < 0) {
+		TR0("Error platform_get_irq");
+		while(1);
+	}
 	/*Now platform dependent initialization.*/
 
 	/*Lets reset the IP*/
@@ -2305,18 +2312,18 @@ s32 synopGMAC_linux_open(struct net_device *netdev)
 
 	/*Request for an shared interrupt. Instead of using netdev->irq lets use pcidev->irq*/
 #ifdef AVB_SUPPORT
-	if(request_irq (pcidev->resource[1].start, synopGMAC_intr_handler_avb, 0, netdev->name,netdev)){
+	if(request_irq (irq, synopGMAC_intr_handler_avb, 0, netdev->name,netdev)){
 		TR0("Error in request_irq\n");
 		goto error_in_irq;
 	}
 #else
-	if(request_irq (pcidev->resource[1].start, synopGMAC_intr_handler, 0, netdev->name,netdev)){
+	if(request_irq (irq, synopGMAC_intr_handler, 0, netdev->name,netdev)){
 		TR0("Error in request_irq\n");
 		goto error_in_irq;
 	}
 #endif
 
-	TR("%s owns a shared interrupt on line %d\n",netdev->name, pcidev->resource[1].start);
+	TR("%s owns a shared interrupt on line %d\n",netdev->name, irq);
 
 	/*Set up the tx and rx descriptor queue/ring*/
 
@@ -2516,6 +2523,7 @@ s32 synopGMAC_linux_close(struct net_device *netdev)
 	synopGMACavbStruct * gmacavb;
 #endif
 	struct platform_device *pcidev;
+	int irq;
 	TR0("%s\n",__FUNCTION__);
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,32)
 	adapter = (synopGMACPciNetworkAdapter *) netdev->priv;
@@ -2557,6 +2565,12 @@ s32 synopGMAC_linux_close(struct net_device *netdev)
 		return -1;
 	}
 
+	irq = platform_get_irq(pcidev, 0);
+	if (irq < 0) {
+		TR0("Error platform_get_irq");
+		while(1);
+	}
+
 	/*Disable all the interrupts*/
 	synopGMAC_disable_interrupt_all(gmacdev);
 
@@ -2592,7 +2606,7 @@ s32 synopGMAC_linux_close(struct net_device *netdev)
 	TR("the synopGMAC Transmission has been disabled\n");
 	netif_stop_queue(netdev);
 	/*Now free the irq: This will detach the interrupt handler registered*/
-	free_irq(pcidev->resource[1].start, netdev);
+	free_irq(irq, netdev);
 	TR("the synopGMAC interrupt handler has been removed\n");
 
 	/*Free the Rx Descriptor contents*/

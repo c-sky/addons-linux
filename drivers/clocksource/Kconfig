@@ -1,0 +1,11 @@
+menu "Clock Source drivers (in addons)"
+
+config NATIONALCHIP_TIMER
+	bool "nationalchip timer"
+	default n
+
+config CSKY_TIMER
+	bool "csky timer"
+	default n
+
+endmenu
