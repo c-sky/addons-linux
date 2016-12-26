@@ -25,8 +25,45 @@
 #include <asm/traps.h>
 #include <asm/csky.h>
 #include <asm/delay.h>
-#include "silan_irq.h"
-#include "cktimer.h"
+#include <asm/addrspace.h>
+/*
+ *  Define the Timer Control Register base address.
+ */
+#define SILAN_SPU_TIMER_PHY_BASE		0x1FCB1000
+#define CKTIMER_BASE          KSEG1ADDR(SILAN_SPU_TIMER_PHY_BASE)
+
+/*
+ *  Define the offset(index) in CKTIMER_BASE for the registers
+ *  addresses of the timer
+ */
+#define CKTIMER_TCN1_LDCR     0x00    // Timer1 Load Count register
+#define CKTIMER_TCN1_CVR      0x01    // Timer1 Current Value register
+#define CKTIMER_TCN1_CR       0x02    // Timer1 Control register
+#define CKTIMER_TCN1_EOI      0x03    // Timer1 Interrupt clear register
+#define CKTIMER_TCN1_ISR      0x04    // Timer1 Interrupt status.
+
+
+#define CKTIMER_TCN2_LDCR     0x08    /* Timer2 Load Count register*/
+#define CKTIMER_TCN2_CVR      0x09    /* Timer2 Current Value register*/
+#define CKTIMER_TCN2_CR       0x0a    /* Timer2 Control register*/
+#define CKTIMER_TCN2_EOI      0x0b    /* Timer2 Interrupt clear register*/
+#define CKTIMER_TCN2_ISR      0x0c    /* Timer2 Interrupt status.*/
+
+#define CKTIMER_COUNT_VALUE	(0xffffffffu)
+/*
+ *  Bit definitions for the Timer Control Register (Timer CR).
+ */
+#define CKTIMER_TCR_RCS       0x00000008    // Timer Reference Clock selection
+#define CKTIMER_TCR_IM        0x00000004    // Timer Interrupt mask
+#define CKTIMER_TCR_MS        0x00000002    // Timer Mode select
+#define CKTIMER_TCR_EN        0x00000001    // Timer Enable select
+
+#define TIMER_EN(x)           ((x) << 7)
+#define TIMER_MODE(x)         ((x) << 6)
+#define TIMER_INT_EN(x)       ((x) << 5)
+#define TIMER_PRE(x)          ((x) << 2)
+#define TIMER_SIZE(x)         ((x) << 1)
+#define TIMER_ONE_SHOT(x)     ((x))
 
 static cycle_t notrace csky_clocksource_read(struct clocksource *unused)
 {
@@ -35,20 +72,6 @@ static cycle_t notrace csky_clocksource_read(struct clocksource *unused)
 	timerp = (volatile unsigned long *) (CKTIMER_BASE);
 
 	return CKTIMER_COUNT_VALUE - timerp[CKTIMER_TCN2_CVR];
-}
-
-/*
- *  Clears the interrupt from timer1.
- */
-void csky_tick(void)
-{
-	volatile unsigned long	*timerp;
-	unsigned long	temp;
-
-	/* Ack and Clear the interrupt from timer1 */
-	timerp = (volatile unsigned long *) (CKTIMER_BASE);
-	timerp[CKTIMER_TCN1_EOI] = 0;
-	temp = timerp[CKTIMER_TCN1_EOI];
 }
 
 static struct clocksource csky_clocksource = {
@@ -82,7 +105,7 @@ static void __init csky_timer1_hw_init(void)
 	 *  set the init value of timer1 load counter, 24bits
 	 *  when the counter overflow, interrupt occurs
 	 */
-	timerp[CKTIMER_TCN1_LDCR] = (CK_BUSCLK /  HZ);
+	timerp[CKTIMER_TCN1_LDCR] = (198000000 /  HZ);
 }
 
 static void __init csky_timer2_hw_init(void)
@@ -163,35 +186,20 @@ static struct irqaction csky_timer_irq = {
 
 void __init csky_timer_init(void)
 {
-	unsigned int csky_clock_rate = CK_BUSCLK;
+	unsigned int csky_clock_rate = 198000000;
 
 	csky_timer1_hw_init();
 	csky_timer2_hw_init();
-	setup_irq(PIC_IRQ_SPU_TIMER, &csky_timer_irq);
+	setup_irq(63, &csky_timer_irq);
 
 	clockevents_calc_mult_shift(&csky_clockevent, csky_clock_rate, 4);
-	csky_clockevent.max_delta_ns = clockevent_delta2ns((CK_BUSCLK / HZ), &csky_clockevent);
+	csky_clockevent.max_delta_ns = clockevent_delta2ns((198000000 / HZ), &csky_clockevent);
 	csky_clockevent.min_delta_ns = clockevent_delta2ns(1, &csky_clockevent);
 	csky_clockevent.cpumask      = cpumask_of(0);
 
 	clockevents_register_device(&csky_clockevent);
 
 	clocksource_register_hz(&csky_clocksource, csky_clock_rate);
-}
-
-unsigned long csky_timer_offset(void)
-{
-	volatile unsigned long  *timerp;
-	unsigned long       trr, tcn, offset;
-
-	timerp = (volatile unsigned long *) (CKTIMER_BASE);
-	tcn = timerp[CKTIMER_TCN1_CVR];
-	trr = timerp[CKTIMER_TCN1_LDCR];
-	
-	tcn = trr - tcn;
-
-	offset = ((tcn * (10000 / HZ)) / (trr / 100));
-	return offset;
 }
 
 /*

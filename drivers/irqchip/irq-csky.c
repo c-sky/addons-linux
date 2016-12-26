@@ -119,18 +119,13 @@ static const struct irq_domain_ops csky_irq_ops = {
 	.xlate	= irq_domain_xlate_onecell,
 };
 
-unsigned int csky_get_auto_irqno(void)
-{
-	unsigned int irqno;
-	irqno = __raw_readl(CKPIC_REG(CKPIC_ISR)) & 0x7f;
-	return irqno;
-}
-
 static int __init
 csky_intc_init(struct device_node *np, struct device_node *parent)
 {
 	struct irq_domain *root_domain;
 	unsigned int nr_irqs;
+
+	nr_irqs = NR_IRQS;
 
 	if (parent)
 		panic("pic not a root intc\n");
@@ -138,11 +133,6 @@ csky_intc_init(struct device_node *np, struct device_node *parent)
 	ckpic_base = (unsigned int)of_iomap(np, 0);
 	if (!ckpic_base)
 		panic("%s, of_iomap err.\n", __func__);
-
-	if (of_property_read_u32(np, "csky,nr-irqs", &nr_irqs))
-		panic("%s, parse csky,nr-irqs failed.\n", __func__);
-	if ((nr_irqs != 32) && (nr_irqs != 64))
-		panic("%s, invalid nr_irqs(%d).\n", __func__, nr_irqs);
 
 	pr_info("csky pic init, reg: %x, nr_irqs: %d.\n",
 			ckpic_base, nr_irqs);
@@ -186,3 +176,4 @@ csky_intc_init(struct device_node *np, struct device_node *parent)
 }
 
 IRQCHIP_DECLARE(csky_intc, "csky,intc", csky_intc_init);
+

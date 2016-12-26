@@ -1,1 +1,1 @@
-obj-$(SILAN) += silan_pl011.o clock.o
+obj-$(CONFIG_SILAN) += silan_pl011.o

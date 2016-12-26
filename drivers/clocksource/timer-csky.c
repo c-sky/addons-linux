@@ -45,6 +45,13 @@
 
 #define FREE_RUNNING_MAX_CNT	0xffffffffu
 
+#define TIMER_EN(x)           ((x) << 7)
+#define TIMER_MODE(x)         ((x) << 6)
+#define TIMER_INT_EN(x)       ((x) << 5)
+#define TIMER_PRE(x)          ((x) << 2)
+#define TIMER_SIZE(x)         ((x) << 1)
+#define TIMER_ONE_SHOT(x)     ((x))
+
 static unsigned int cktimer_base;
 #define CKTIMER_REG(offset)	((void *)(cktimer_base + (offset)))
 
@@ -56,7 +63,14 @@ static void __init csky_timer1_hw_init(unsigned int freq)
 	 * Timer Mode:      user-defined
 	 * Timer Enable:    enable
 	 */
-	__raw_writel(CKTIMER_TCR_MS | CKTIMER_TCR_EN, CKTIMER_REG(CKTIMER_TCN1_CR));
+	__raw_writel(
+		TIMER_EN(1)|
+		TIMER_MODE(1)|
+		TIMER_INT_EN(1)|
+		TIMER_PRE(0)|
+		TIMER_SIZE(1)|
+		TIMER_ONE_SHOT(0),
+		CKTIMER_REG(CKTIMER_TCN1_CR));
 
 	/* set the init value of timer1 load counter(32bits) */
 	__raw_writel(freq / HZ, CKTIMER_REG(CKTIMER_TCN1_LDCR));
@@ -70,7 +84,14 @@ static void __init csky_timer2_hw_init(void)
 	 * Timer Mode:      free-running
 	 * Timer Enable:    enable
 	 */
-	__raw_writel(CKTIMER_TCR_IM | CKTIMER_TCR_EN, CKTIMER_REG(CKTIMER_TCN2_CR));
+	__raw_writel(
+		TIMER_EN(1)|
+		TIMER_MODE(1)|
+		TIMER_INT_EN(0)|
+		TIMER_PRE(0)|
+		TIMER_SIZE(1)|
+		TIMER_ONE_SHOT(0),
+		CKTIMER_REG(CKTIMER_TCN2_CR));
 
 	/* set the init value of timer2 load counter(32bits) */
 	__raw_writel(FREE_RUNNING_MAX_CNT, CKTIMER_REG(CKTIMER_TCN2_LDCR));
@@ -79,10 +100,11 @@ static void __init csky_timer2_hw_init(void)
 static irqreturn_t csky_timer_interrupt(int irq, void *dev_id)
 {
 	struct clock_event_device *evt = (struct clock_event_device *)dev_id;
-	unsigned long temp;
+	volatile unsigned long temp;
 
 	/* clear timer1 interrupt */
 	temp = __raw_readl(CKTIMER_REG(CKTIMER_TCN1_EOI));
+	__raw_writel(0, CKTIMER_REG(CKTIMER_TCN1_EOI));
 
 	evt->event_handler(evt);
 	return IRQ_HANDLED;
@@ -95,9 +117,10 @@ static int csky_timer_set_next_event(unsigned long cycles, struct clock_event_de
 }
 
 static struct clock_event_device csky_clockevent = {
-	.name			= "csky_timer1",
+	.name			= "csky-clkevent",
 	.features		= CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_ONESHOT,
-	.set_next_event	= csky_timer_set_next_event,
+//	.set_state_periodic	= csky_timer_set_periodic,
+	.set_next_event		= csky_timer_set_next_event,
 };
 
 static cycle_t notrace csky_clocksource_read(struct clocksource *unused)

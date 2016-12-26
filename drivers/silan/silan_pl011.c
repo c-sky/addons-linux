@@ -46,7 +46,6 @@
 #include <linux/delay.h>
 #include <linux/platform_device.h>
 
-#include "silan_clk.h"
 #include <asm/sizes.h>
 
 
@@ -327,6 +326,7 @@ static void pl011_lockup_wa(unsigned long data)
 	writel(0x00, uap->port.membase + UART011_CR);
 
 	/* Soft reset UART module */
+#if 0
 	if (uap->port.dev->platform_data) {
 		struct amba_pl011_data *plat;
 
@@ -334,7 +334,7 @@ static void pl011_lockup_wa(unsigned long data)
 		if (plat->reset)
 			plat->reset();
 	}
-
+#endif
 	/* Restore registers */
 	for (loop = 0; loop < UART_WA_SAVE_NR; loop++)
 		writel(uart_wa_regdata[loop] ,
@@ -391,7 +391,7 @@ static void pl011_enable_ms(struct uart_port *port)
 
 static void pl011_rx_chars(struct uart_amba_port *uap)
 {
-	struct tty_struct *tty = uap->port.state->port.tty;
+	struct tty_port *tty = &uap->port.state->port;
 
 	pl011_fifo_to_tty(uap);
 
@@ -618,14 +618,7 @@ static int pl011_startup(struct uart_port *port)
 	unsigned int cr;
 	int retval;
 
-	/*
-	 * Try to enable the clock producer.
-	 */
-	retval = clk_enable(uap->clk);
-	if (retval)
-		goto out;
-
-	uap->port.uartclk = clk_get_rate(uap->clk);
+	uap->port.uartclk = 100000000;
 
 	/*
 	 * Allocate the IRQ
@@ -697,8 +690,6 @@ static int pl011_startup(struct uart_port *port)
 	return 0;
 
  clk_dis:
-	clk_disable(uap->clk);
- out:
 	return retval;
 }
 
@@ -748,7 +739,7 @@ static void pl011_shutdown(struct uart_port *port)
 	/*
 	 * Shut down the clock producer
 	 */
-	clk_disable(uap->clk);
+	//clk_disable(uap->clk);
 
 	if (uap->port.dev->platform_data) {
 		struct amba_pl011_data *plat;
@@ -969,7 +960,6 @@ static struct uart_ops amba_pl011_pops = {
 
 static struct uart_amba_port *amba_ports[UART_NORMAL_NR];
 
-#ifdef CONFIG_SERIAL_SILAN_CONSOLE
 static void pl011_console_putchar(struct uart_port *port, int ch)
 {
 	struct uart_amba_port *uap = (struct uart_amba_port *)port;
@@ -1071,7 +1061,7 @@ static int __init pl011_console_setup(struct console *co, char *options)
 			plat->init();
 	}
 
-	uap->port.uartclk = clk_get_rate(uap->clk);
+	uap->port.uartclk = 100000000;
 
 	if (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
@@ -1093,9 +1083,6 @@ static struct console silan_console = {
 };
 
 #define SILAN_CONSOLE	(&silan_console)
-#else
-#define SILAN_CONSOLE	NULL
-#endif
 
 static struct uart_driver silan_reg = {
 	.owner			= THIS_MODULE,
@@ -1105,14 +1092,6 @@ static struct uart_driver silan_reg = {
 	.minor			= SERIAL_AMBA_MINOR,
 	.nr			= UART_NORMAL_NR,
 	.cons			= SILAN_CONSOLE,
-};
-
-struct clk sl_uart_clk = {
-	.clk_id = {SILAN_CLK_UART0},
-	.enable = clk_enable,
-	.disable = clk_disable,
-	.get_rate = clk_get_lsp,
-	.set_rate = NULL,
 };
 
 static int silan_uart_probe(struct platform_device *dev)
@@ -1152,7 +1131,6 @@ static int silan_uart_probe(struct platform_device *dev)
 	}
 
 	sprintf(uart_name, "%s", dev->name + 6);
-	uap->clk = &sl_uart_clk;
 	if (IS_ERR(uap->clk)) {
 		ret = PTR_ERR(uap->clk);
 		goto unmap;
@@ -1182,7 +1160,6 @@ static int silan_uart_probe(struct platform_device *dev)
 	{
 		amba_ports[dev->id] = NULL;
 		pl011_dma_remove(uap);
-		clk_put(uap->clk);
 unmap:
 		iounmap(base);
 free:
@@ -1208,7 +1185,6 @@ static int silan_uart_remove(struct platform_device *dev)
 		uart_remove_one_port(&silan_reg, &uap[i]->port);
 		pl011_dma_remove(uap[i]);
 		iounmap(uap[i]->port.membase);
-		clk_put(uap[i]->clk);
 		kfree(uap[i]);
 	}
 	return 0;
@@ -1271,6 +1247,7 @@ static void __exit silan_uart_exit(void)
 	platform_driver_unregister(&silan_uart0_driver);
 	uart_unregister_driver(&silan_reg);
 }
+
 
 /*
  * While this can be a module, if builtin it's most likely the console
