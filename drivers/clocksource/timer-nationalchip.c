@@ -16,6 +16,7 @@
 #include <linux/of.h>
 #include <linux/of_address.h>
 #include <linux/of_irq.h>
+#include <linux/sched_clock.h>
 
 #define NC_VA_COUNTER_1_STATUS		(void *)(timer_reg + 0x00)
 #define NC_VA_COUNTER_1_VALUE		(void *)(timer_reg + 0x04)
@@ -93,12 +94,12 @@ static struct clock_event_device nc_ced = {
 	.set_next_event		= nc_timer_set_next_event,
 };
 
-static cycle_t notrace nc_csd_read(struct clocksource *unused)
+static u64 notrace nc_sched_clock_read(void)
 {
-	return (cycle_t) __raw_readl(NC_VA_COUNTER_2_VALUE);
+	return (u64) __raw_readl(NC_VA_COUNTER_2_VALUE);
 }
 
-static int nc_csd_enable(struct clocksource *unused)
+static void nc_csd_enable(void)
 {
 	__raw_writel(0x1, NC_VA_COUNTER_2_CONTROL);
 	__raw_writel(0x0, NC_VA_COUNTER_2_CONTROL);
@@ -107,25 +108,7 @@ static int nc_csd_enable(struct clocksource *unused)
 	__raw_writel(26,NC_VA_COUNTER_2_PRE);
 	__raw_writel(0, NC_VA_COUNTER_2_INI);
 	__raw_writel(0x2, NC_VA_COUNTER_2_CONTROL);
-
-	return 0;
 }
-
-static void nc_csd_disable(struct clocksource *unused)
-{
-	__raw_writel(0x0, NC_VA_COUNTER_2_CONTROL);
-	__raw_writel(0x0, NC_VA_COUNTER_2_CONFIG);
-}
-
-static struct clocksource nc_csd = {
-	.name			= "nationalchip-clksource",
-	.rating			= 300,
-	.read			= nc_csd_read,
-	.enable			= nc_csd_enable,
-	.disable		= nc_csd_disable,
-	.mask			= CLOCKSOURCE_MASK(32),
-	.flags			= CLOCK_SOURCE_IS_CONTINUOUS,
-};
 
 static int __init nc_timer_init(struct device_node *np)
 {
@@ -154,7 +137,10 @@ static int __init nc_timer_init(struct device_node *np)
 	/* register */
 	clockevents_config_and_register(&nc_ced, freq, 1, ULONG_MAX);
 
-	clocksource_register_hz(&nc_csd, freq);
+	nc_csd_enable();
+	clocksource_mmio_init(NC_VA_COUNTER_2_VALUE, "nationalchip-clksource", freq, 200, 32, clocksource_mmio_readl_up);
+
+	sched_clock_register(nc_sched_clock_read, 32, freq);
 
 	return 0;
 }

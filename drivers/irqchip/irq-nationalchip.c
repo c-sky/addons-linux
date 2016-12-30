@@ -25,7 +25,6 @@
 #define NC_VA_INTC_NMASK63_32		(void *)(intc_reg + 0x54)
 #define NC_VA_INTC_SOURCE		(void *)(intc_reg + 0x60)
 
-static unsigned int irq_num[NR_IRQS];
 static unsigned int intc_reg;
 
 static void nc_irq_mask(struct irq_data *d)
@@ -33,7 +32,7 @@ static void nc_irq_mask(struct irq_data *d)
 	unsigned int mask;
 	unsigned int irq_chan;
 
-	irq_chan = irq_num[d->irq];
+	irq_chan = d->irq;
 	if (irq_chan == 0xff) return;
 
 	if (irq_chan < 32) {
@@ -52,7 +51,7 @@ static void nc_irq_unmask(struct irq_data *d)
 	unsigned int mask;
 	unsigned int irq_chan;
 
-	irq_chan = irq_num[d->irq];
+	irq_chan = d->irq;
 	if (irq_chan == 0xff) return;
 
 	if (irq_chan < 32) {
@@ -71,7 +70,7 @@ static void nc_irq_en(unsigned int irq)
 	unsigned int mask;
 	unsigned int irq_chan;
 
-	irq_chan = irq_num[irq];
+	irq_chan = irq;
 	if (irq_chan == 0xff) return;
 
 	if (irq_chan < 32) {
@@ -88,7 +87,7 @@ static void nc_irq_dis(unsigned int irq)
 	unsigned int mask;
 	unsigned int irq_chan;
 
-	irq_chan = irq_num[irq];
+	irq_chan = irq;
 	if (irq_chan == 0xff) return;
 
 	if (irq_chan < 32) {
@@ -104,14 +103,6 @@ static inline void nc_irq_ack(struct irq_data *d) {}
 
 unsigned int nc_irq_channel_set(struct irq_data *d)
 {
-	unsigned int status, i;
-
-	i = d->irq;
-	irq_num[i] = i;
-	status = __raw_readl(NC_VA_INTC_SOURCE + i - i%4) &
-				((i << ((i%4)*8)) | ~(0xff << ((i%4)*8)));
-	__raw_writel(status, NC_VA_INTC_SOURCE + i - i%4);
-
 	nc_irq_en(d->irq);
 	nc_irq_unmask(d);
 	return 0;
@@ -119,17 +110,8 @@ unsigned int nc_irq_channel_set(struct irq_data *d)
 
 void nc_irq_channel_clear(struct irq_data *d)
 {
-	unsigned int i, status;
-
-	i = irq_num[d->irq];
-	irq_num[d->irq] = 0xff;
-
 	nc_irq_mask(d);
 	nc_irq_dis(d->irq);
-
-	status = __raw_readl(NC_VA_INTC_SOURCE + i - i%4);
-	status = status | (0xff << ((i%4)*8));
-	__raw_writel(status, NC_VA_INTC_SOURCE + i - i%4);
 }
 
 struct irq_chip nc_irq_chip = {
@@ -184,11 +166,6 @@ static int irq_map(struct irq_domain *h, unsigned int virq,
 {
 	irq_set_chip_and_handler(virq, &nc_irq_chip, handle_level_irq);
 
-	irq_num[virq] = 0xff;
-
-	if(virq%4 == 0)
-		__raw_writel(0xffffffff, NC_VA_INTC_SOURCE + virq);
-
 	return 0;
 }
 
@@ -201,6 +178,7 @@ static int __init
 intc_init(struct device_node *intc, struct device_node *parent)
 {
 	struct irq_domain *root_domain;
+	unsigned int i;
 
 	if (parent)
 		panic("DeviceTree incore intc not a root irq controller\n");
@@ -215,6 +193,10 @@ intc_init(struct device_node *intc, struct device_node *parent)
 	__raw_writel(0xffffffff, NC_VA_INTC_NENCLR63_32);
 	__raw_writel(0xffffffff, NC_VA_INTC_NMASK31_00);
 	__raw_writel(0xffffffff, NC_VA_INTC_NMASK63_32);
+
+	for (i=0; i<64; i=i+4)
+		__raw_writel(i|((i+1)<<8)|((i+2)<<16)|((i+3)<<24),
+				NC_VA_INTC_SOURCE + i);
 
 	root_domain = irq_domain_add_legacy(intc, NR_IRQS, 0, 0, &nc_irq_ops, NULL);
 	if (!root_domain)
