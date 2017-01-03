@@ -7,7 +7,6 @@
 #include <linux/irqchip.h>
 #include <linux/irq.h>
 #include <linux/interrupt.h>
-#include <asm/machdep.h>
 #include <asm/irq.h>
 #include <asm/io.h>
 
@@ -29,98 +28,78 @@ static unsigned int intc_reg;
 
 static void nc_irq_mask(struct irq_data *d)
 {
-	unsigned int mask;
-	unsigned int irq_chan;
+	unsigned int mask, irq;
 
-	irq_chan = d->irq;
-	if (irq_chan == 0xff) return;
+	irq = d->irq;
 
-	if (irq_chan < 32) {
+	if (irq < 32) {
 		mask = __raw_readl(NC_VA_INTC_NMASK31_00);
-		mask |= 1 << irq_chan;
+		mask |= 1 << irq;
 		__raw_writel(mask, NC_VA_INTC_NMASK31_00);
 	} else {
 		mask = __raw_readl(NC_VA_INTC_NMASK63_32);
-		mask |= 1 << (irq_chan - 32);
+		mask |= 1 << (irq - 32);
 		__raw_writel(mask, NC_VA_INTC_NMASK63_32);
 	}
 }
 
 static void nc_irq_unmask(struct irq_data *d)
 {
-	unsigned int mask;
-	unsigned int irq_chan;
+	unsigned int mask, irq;
 
-	irq_chan = d->irq;
-	if (irq_chan == 0xff) return;
+	irq = d->irq;
 
-	if (irq_chan < 32) {
+	if (irq < 32) {
 		mask = __raw_readl(NC_VA_INTC_NMASK31_00);
-		mask &= ~( 1 << irq_chan);
+		mask &= ~( 1 << irq);
 		__raw_writel(mask, NC_VA_INTC_NMASK31_00);
 	} else {
 		mask = __raw_readl( NC_VA_INTC_NMASK63_32);
-		mask &= ~(1 << (irq_chan - 32));
+		mask &= ~(1 << (irq - 32));
 		__raw_writel(mask, NC_VA_INTC_NMASK63_32);
 	}
 }
 
-static void nc_irq_en(unsigned int irq)
+static void nc_irq_en(struct irq_data *d)
 {
-	unsigned int mask;
-	unsigned int irq_chan;
+	unsigned int mask, irq;
 
-	irq_chan = irq;
-	if (irq_chan == 0xff) return;
+	irq = d->irq;
 
-	if (irq_chan < 32) {
-		mask = 1 << irq_chan;
+	if (irq < 32) {
+		mask = 1 << irq;
 		__raw_writel(mask, NC_VA_INTC_NENSET31_00);
 	} else {
-		mask = 1 << (irq_chan - 32);
+		mask = 1 << (irq - 32);
 		__raw_writel(mask, NC_VA_INTC_NENSET63_32);
 	}
+
+	nc_irq_unmask(d);
 }
 
-static void nc_irq_dis(unsigned int irq)
+static void nc_irq_dis(struct irq_data *d)
 {
-	unsigned int mask;
-	unsigned int irq_chan;
+	unsigned int mask, irq;
 
-	irq_chan = irq;
-	if (irq_chan == 0xff) return;
+	irq = d->irq;
 
-	if (irq_chan < 32) {
-		mask = 1 << irq_chan;
+	if (irq < 32) {
+		mask = 1 << irq;
 		__raw_writel(mask, NC_VA_INTC_NENCLR31_00);
 	} else {
-		mask = 1 << (irq_chan - 32);
+		mask = 1 << (irq - 32);
 		__raw_writel(mask, NC_VA_INTC_NENCLR63_32);
 	}
-}
 
-static inline void nc_irq_ack(struct irq_data *d) {}
-
-unsigned int nc_irq_channel_set(struct irq_data *d)
-{
-	nc_irq_en(d->irq);
-	nc_irq_unmask(d);
-	return 0;
-}
-
-void nc_irq_channel_clear(struct irq_data *d)
-{
 	nc_irq_mask(d);
-	nc_irq_dis(d->irq);
 }
 
 struct irq_chip nc_irq_chip = {
 	.name =		"nationalchip_intc_v1",
-	.irq_ack =	nc_irq_ack,
 	.irq_mask =	nc_irq_mask,
 	.irq_unmask =	nc_irq_unmask,
-	.irq_startup =	nc_irq_channel_set,
-	.irq_shutdown =	nc_irq_channel_clear,
+	.irq_enable =	nc_irq_en,
+	.irq_disable =	nc_irq_dis,
 };
 
 inline int ff1_64(unsigned int hi, unsigned int lo)
@@ -143,7 +122,7 @@ inline int ff1_64(unsigned int hi, unsigned int lo)
 		result = 31-lo;
 	else if( hi != 32 ) result = 31-hi + 32;
 	else {
-		printk("mach_get_auto_irqno error hi:%x, lo:%x.\n", hi, lo);
+		printk("nc_get_irqno error hi:%x, lo:%x.\n", hi, lo);
 		result = NR_IRQS;
 	}
 	return result;
@@ -151,9 +130,8 @@ inline int ff1_64(unsigned int hi, unsigned int lo)
 
 unsigned int nc_get_irqno(void)
 {
-	unsigned int nint64hi;
-	unsigned int nint64lo;
-	int irq_no;
+	unsigned int nint64hi, nint64lo, irq_no;
+
 	nint64lo = __raw_readl(NC_VA_INTC_NINT31_00);
 	nint64hi = __raw_readl(NC_VA_INTC_NINT63_32);
 	irq_no = ff1_64(nint64hi, nint64lo);
@@ -183,7 +161,7 @@ intc_init(struct device_node *intc, struct device_node *parent)
 	if (parent)
 		panic("DeviceTree incore intc not a root irq controller\n");
 
-	mach_get_auto_irqno = nc_get_irqno;
+	csky_get_auto_irqno = nc_get_irqno;
 
 	intc_reg = (unsigned int) of_iomap(intc, 0);
 	if (!intc_reg)
@@ -207,5 +185,5 @@ intc_init(struct device_node *intc, struct device_node *parent)
 	return 0;
 }
 
-IRQCHIP_DECLARE(nationalchip_intc_v1, "nationalchip,intc-v1", intc_init);
+IRQCHIP_DECLARE(nationalchip_intc_v1_ave, "nationalchip,intc-v1,ave", intc_init);
 

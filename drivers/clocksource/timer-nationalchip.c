@@ -9,7 +9,6 @@
 #include <linux/sizes.h>
 #include <linux/clocksource.h>
 #include <linux/clockchips.h>
-#include <asm/machdep.h>
 #include <asm/irq.h>
 #include <asm/io.h>
 #include <asm/delay.h>
