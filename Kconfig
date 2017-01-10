@@ -1,4 +1,3 @@
 source addons/drivers/clocksource/Kconfig
 source addons/drivers/irqchip/Kconfig
-source addons/drivers/nationalchip/Kconfig
 source addons/drivers/silan/Kconfig
