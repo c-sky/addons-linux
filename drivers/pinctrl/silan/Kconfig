@@ -1,0 +1,8 @@
+config PINCTRL_SILAN
+	bool "Silan pinctrl driver"
+	depends on OF
+	select PINCTRL
+	select PINMUX
+	select PINCONF
+	select GENERIC_PINCONF
+

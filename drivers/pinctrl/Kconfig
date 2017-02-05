@@ -1,0 +1,5 @@
+menu "Pin controllers (in addons)"
+
+source addons/drivers/pinctrl/silan/Kconfig
+
+endmenu
