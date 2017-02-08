@@ -1,4 +1,4 @@
 source addons/drivers/clocksource/Kconfig
 source addons/drivers/irqchip/Kconfig
 source addons/drivers/pinctrl/Kconfig
-source addons/drivers/silan/Kconfig
+source addons/drivers/clk/Kconfig

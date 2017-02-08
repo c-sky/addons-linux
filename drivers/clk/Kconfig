@@ -1,0 +1,5 @@
+menu "Clock drivers (in addons)"
+
+source addons/drivers/clk/silan/Kconfig
+
+endmenu

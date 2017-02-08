@@ -1,0 +1,5 @@
+config CLK_SILAN
+	bool "Silan clock driver"
+	depends on OF
+	select ARM_AMBA
+
