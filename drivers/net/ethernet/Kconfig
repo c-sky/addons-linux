@@ -1,0 +1,5 @@
+menu "Ethernet drivers (in addons)"
+
+source addons/drivers/net/ethernet/silan_stmmac/Kconfig
+
+endmenu
