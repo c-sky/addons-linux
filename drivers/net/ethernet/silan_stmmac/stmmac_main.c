@@ -37,7 +37,6 @@
 #include <linux/ip.h>
 #include <linux/tcp.h>
 #include <linux/skbuff.h>
-#include <linux/clk.h>
 #include <linux/ethtool.h>
 #include <linux/if_ether.h>
 #include <linux/crc32.h>
@@ -47,9 +46,6 @@
 #include <linux/dma-mapping.h>
 #include <linux/slab.h>
 #include <linux/prefetch.h>
-#include <silan_regs.h>
-#include <silan_resources.h>
-#include <silan_setup.h>
 #include "stmmac.h"
 #ifdef CONFIG_SILAN_GMAC_TX_POSTCHK
 #include "silan_gmac_enhance.h"
@@ -166,14 +162,14 @@ static irqreturn_t stmmac_interrupt(int irq, void *dev_id);
 
 static int desc_in_sram(int id)
 {
-#if defined CONFIG_GMAC0_DMADES_USE_SRAM 
-	if ((id == 0) || (id == -1)) 
+#if defined CONFIG_GMAC0_DMADES_USE_SRAM
+	if ((id == 0) || (id == -1))
 		return 1;
-#elif defined CONFIG_GMAC1_DMADES_USE_SRAM 
-	if (id == 1) 
+#elif defined CONFIG_GMAC1_DMADES_USE_SRAM
+	if (id == 1)
 		return 1;
 #endif
-	return 0; 
+	return 0;
 }
 /**
  * stmmac_verify_args - verify the driver parameters.
@@ -239,7 +235,6 @@ static inline void stmmac_hw_fix_mac_speed(struct stmmac_priv *priv)
  */
 static void stmmac_adjust_link(struct net_device *dev)
 {
-	int i;
 	struct stmmac_priv *priv = netdev_priv(dev);
 	struct phy_device *phydev = priv->phydev;
 	unsigned long flags;
@@ -373,7 +368,7 @@ static int stmmac_init_phy(struct net_device *dev)
 		 priv->phy_addr);
 	pr_debug("stmmac_init_phy:  trying to attach to %s\n", phy_id);
 
-	phydev = phy_connect(dev, phy_id, &stmmac_adjust_link, 0,
+	phydev = phy_connect(dev, phy_id, &stmmac_adjust_link,
 			priv->phy_interface);
 
 	if (IS_ERR(phydev)) {
@@ -448,7 +443,7 @@ static void display_ring(struct dma_desc *p, int size)
  */
 static void init_dma_desc_rings(struct net_device *dev)
 {
-	int i, ii;
+	int i;
 	struct stmmac_priv *priv = netdev_priv(dev);
 	struct sk_buff *skb;
 	unsigned int txsize = priv->dma_tx_size;
@@ -695,11 +690,13 @@ static void stmmac_tx(struct stmmac_priv *priv)
 			 * we add this skb back into the pool,
 			 * if it's the right size.
 			 */
+			#if 0
 			if ((skb_queue_len(&priv->rx_recycle) <
 				priv->dma_rx_size) &&
 				skb_recycle_check(skb, priv->dma_buf_sz))
 				__skb_queue_head(&priv->rx_recycle, skb);
 			else
+			#endif
 				dev_kfree_skb(skb);
 
 			priv->tx_skbuff[entry] = NULL;
@@ -1142,9 +1139,7 @@ static netdev_tx_t stmmac_xmit(struct sk_buff *skb, struct net_device *dev)
 		desc = priv->dma_tx + entry;
 
 		TX_DBG("\t[entry %d] segment len: %d\n", entry, len);
-		desc->des2 = dma_map_page(priv->device, frag->page,
-					  frag->page_offset,
-					  len, DMA_TO_DEVICE);
+		desc->des2 = skb_frag_dma_map(priv->device, frag, 0, len, DMA_TO_DEVICE);
 		priv->tx_skbuff[entry] = NULL;
 		priv->hw->desc->prepare_tx_desc(desc, 0, len, csum_insertion);
 		priv->hw->desc->set_tx_owner(desc);
@@ -1393,6 +1388,7 @@ static int stmmac_config(struct net_device *dev, struct ifmap *map)
 	return 0;
 }
 
+#if 0
 /**
  *  stmmac_multicast_list - entry point for multicast addressing
  *  @dev : pointer to the device structure
@@ -1410,6 +1406,26 @@ static void stmmac_multicast_list(struct net_device *dev)
 	priv->hw->mac->set_filter(dev);
 	spin_unlock(&priv->lock);
 }
+#else
+/**
+ *  stmmac_set_rx_mode - entry point for multicast addressing
+ *  @dev : pointer to the device structure
+ *  Description:
+ *  This function is a driver entry point which gets called by the kernel
+ *  whenever multicast addresses must be enabled/disabled.
+ *  Return value:
+ *  void.
+ */
+static void stmmac_set_rx_mode(struct net_device *dev)
+{
+	struct stmmac_priv *priv = netdev_priv(dev);
+
+	spin_lock(&priv->lock);
+	priv->hw->mac->set_filter(dev);
+	spin_unlock(&priv->lock);
+}
+#endif
+
 
 /**
  *  stmmac_change_mtu - entry point to change MTU size for the device.
@@ -1448,21 +1464,21 @@ static int stmmac_change_mtu(struct net_device *dev, int new_mtu)
 	return 0;
 }
 
-static u32 stmmac_fix_features(struct net_device *dev, u32 features)
+static netdev_features_t stmmac_fix_features(struct net_device *dev, netdev_features_t features)
 {
 	struct stmmac_priv *priv = netdev_priv(dev);
 
 	if (!priv->rx_coe)
 		features &= ~NETIF_F_RXCSUM;
 	if (!priv->plat->tx_coe)
-		features &= ~NETIF_F_ALL_CSUM;
+		features &= ~NETIF_F_CSUM_MASK;
 
 	/* Some GMAC devices have a bugged Jumbo frame support that
 	 * needs to have the Tx COE disabled for oversized frames
 	 * (due to limited buffer sizes). In this case we disable
 	 * the TX csum insertionin the TDES and not use SF. */
 	if (priv->plat->bugged_jumbo && (dev->mtu > ETH_DATA_LEN))
-		features &= ~NETIF_F_ALL_CSUM;
+		features &= ~NETIF_F_CSUM_MASK;
 
 	return features;
 }
@@ -1545,7 +1561,11 @@ static const struct net_device_ops stmmac_netdev_ops = {
 	.ndo_stop = stmmac_release,
 	.ndo_change_mtu = stmmac_change_mtu,
 	.ndo_fix_features = stmmac_fix_features,
+#if 0
 	.ndo_set_multicast_list = stmmac_multicast_list,
+#else
+	.ndo_set_rx_mode = stmmac_set_rx_mode,
+#endif
 	.ndo_tx_timeout = stmmac_tx_timeout,
 	.ndo_do_ioctl = stmmac_ioctl,
 	.ndo_set_config = stmmac_config,
@@ -1570,17 +1590,17 @@ static int stmmac_probe(struct net_device *dev)
 	int ret = 0;
 	struct stmmac_priv *priv = netdev_priv(dev);
 	if ((priv->platform_id == 0) || (priv->platform_id == -1))
-		priv->clk = clk_get(&dev->dev, MAC0_CLK_NAME);
+		priv->clk = silan_clk_get(&dev->dev, MAC0_CLK_NAME);
 	else if (priv->platform_id == 1)
-		priv->clk = clk_get(&dev->dev, MAC1_CLK_NAME);
+		priv->clk = silan_clk_get(&dev->dev, MAC1_CLK_NAME);
 
-	if (IS_ERR(priv->clk)) 
+	if (IS_ERR(priv->clk))
 	{
 		printk("get stmmac clk error \n");
 		ret = PTR_ERR(priv->clk);
 		return ret;
 	}
-	clk_enable(priv->clk);
+	silan_clk_enable(priv->clk);
 
 	ether_setup(dev);
 
@@ -1969,7 +1989,7 @@ static int stmmac_suspend(struct device *dev)
 		stmmac_disable_mac(priv->ioaddr);
 
 	spin_unlock(&priv->lock);
-	clk_disable(priv->clk);
+	silan_clk_disable(priv->clk);
 	return 0;
 }
 
@@ -1981,7 +2001,7 @@ static int stmmac_resume(struct device *dev)
 	if (!netif_running(ndev))
 		return 0;
 
-	clk_enable(priv->clk);
+	silan_clk_enable(priv->clk);
 	spin_lock(&priv->lock);
 
 	/* Power Down bit, into the PM register, is cleared
@@ -2068,6 +2088,174 @@ static struct platform_driver stmmac1_driver = {
 };
 #endif
 
+#define SILAN_GMAC1_BASE		0xBFAC8000
+#define SILAN_GMAC1_PHY_BASE		0x1FAC8000
+#define SILAN_GMAC1_SIZE		0x7FFF
+
+#define SILAN_GMAC0_BASE		0xBFAD0000
+#define SILAN_GMAC0_PHY_BASE		0x1FAD0000
+#define SILAN_GMAC0_SIZE		0x7FFF
+
+static int silan_phy_reset(void * priv)
+{
+#if 0
+	OUT_GPIO(3);
+	SET_GPIO(3);
+	udelay(1);
+	CLR_GPIO(3);
+	udelay(2);
+	SET_GPIO(3);
+#endif
+	return 0;
+}
+
+static struct plat_stmmacphy_data phy_private_data =
+{
+	.bus_id = 0,
+	.phy_addr = -1,
+	.phy_mask = 0,
+	.interface = PHY_INTERFACE_MODE_MII,
+	.phy_reset = &silan_phy_reset,
+};
+
+static struct resource silan_phy_resources[] =
+{
+	[0] = {
+		.name   = "phyirq",
+		.start	= -1,	/* since we want to work on poll mode */
+		.end	= -1,
+		.flags	= IORESOURCE_IRQ,
+	},
+};
+
+static struct platform_device silan_phy_device =
+{
+	.name			= "stmmacphy",
+	.id				= -1,
+	.num_resources	= ARRAY_SIZE(silan_phy_resources),
+	.resource		= silan_phy_resources,
+	.dev = {
+		.platform_data = &phy_private_data,
+	}
+};
+
+static struct plat_stmmacphy_data mac1_phy_private_data =
+{
+	.bus_id = 1,
+	.phy_addr = -1,
+	.phy_mask = 0,
+	.interface = PHY_INTERFACE_MODE_MII,
+	.phy_reset = &silan_phy_reset,
+};
+
+static struct resource silan_mac1_phy_resources[] =
+{
+	[0] = {
+		.name   = "phy1irq",
+		.start	= -1,	/* since we want to work on poll mode */
+		.end	= -1,
+		.flags	= IORESOURCE_IRQ,
+	},
+};
+
+static struct platform_device silan_mac1_phy_device =
+{
+	.name			= "stmmac1phy",
+	.id				= -1,
+	.num_resources	= ARRAY_SIZE(silan_mac1_phy_resources),
+	.resource		= silan_mac1_phy_resources,
+	.dev = {
+		.platform_data = &mac1_phy_private_data,
+	}
+};
+
+static struct plat_stmmacenet_data mac_private_data =
+{
+	.bus_id		= 0,
+	.pbl		= 8,
+	.has_gmac	= 1,
+	.enh_desc	= 1,
+	.tx_coe		= 1,
+	.clk_csr	= 0,
+	.bugged_jumbo	= 0,
+	.pmt		= 0,
+};
+
+static struct plat_stmmacenet_data mac1_private_data =
+{
+	.bus_id		= 1,
+	.pbl		= 8,
+	.has_gmac	= 1,
+	.enh_desc	= 1,
+	.tx_coe		= 1,
+	.clk_csr	= 0,
+	.bugged_jumbo	= 0,
+	.pmt		= 0,
+};
+#define PIC_IRQ_GMAC0 26
+#define PIC_IRQ_GMAC1 19
+static struct resource silan_mac_resources[] =
+{
+	[0] = {
+		.start	= SILAN_GMAC0_PHY_BASE,
+		.end	= SILAN_GMAC0_PHY_BASE + SILAN_GMAC0_SIZE,
+		.flags	= IORESOURCE_MEM,
+	},
+
+	[1] = {
+		.name = "macirq",
+		.start	= PIC_IRQ_GMAC0,
+		.end	= PIC_IRQ_GMAC0,
+		.flags	= IORESOURCE_IRQ,
+	}
+};
+
+static struct platform_device silan_mac_device =
+{
+	.name	= "stmmaceth",
+	.id	    = 0,
+	.dev	= {
+		.platform_data = &mac_private_data,
+	},
+	.num_resources	= ARRAY_SIZE(silan_mac_resources),
+	.resource	= silan_mac_resources,
+};
+
+static struct resource silan_mac1_resources[] =
+{
+	[0] = {
+		.start	= SILAN_GMAC1_PHY_BASE,
+		.end	= SILAN_GMAC1_PHY_BASE + SILAN_GMAC1_SIZE,
+		.flags	= IORESOURCE_MEM,
+	},
+
+	[1] = {
+		.name = "mac1irq",
+		.start	= PIC_IRQ_GMAC1,
+		.end	= PIC_IRQ_GMAC1,
+		.flags	= IORESOURCE_IRQ,
+	}
+};
+
+static struct platform_device silan_mac1_device =
+{
+	.name	= "stmmac1eth",
+	.id	    = 1,
+	.dev	= {
+		.platform_data = &mac1_private_data,
+	},
+	.num_resources	= ARRAY_SIZE(silan_mac1_resources),
+	.resource	= silan_mac1_resources,
+};
+
+static struct platform_device *silan_devices[] __initdata =
+{
+	&silan_phy_device,
+	//&silan_mac1_phy_device,
+	&silan_mac_device,
+	//&silan_mac1_device,
+};
+
 /**
  * stmmac_init_module - Entry point for the driver
  * Description: This function is the entry point for the driver.
@@ -2096,6 +2284,11 @@ static int __init stmmac_init_module(void)
 		return -ENODEV;
 	};
 #endif
+
+	if(platform_add_devices(silan_devices, ARRAY_SIZE(silan_devices))) {
+		pr_err("silan_stmmac silan_devices registered err!\n");
+		return -ENODEV;
+	}
 
 	return 0;
 }

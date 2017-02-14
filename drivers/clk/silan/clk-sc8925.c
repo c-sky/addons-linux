@@ -2562,6 +2562,42 @@ static struct silan_clk_device sc8925_clk_devices[] = {
 #endif
 };
 
+struct silan_clk *silan_clk_get(struct device *dev, const char *id)
+{
+	int i, found = 0;
+
+	for (i=0; i<ARRAY_SIZE(sc8925_clk_devices); i++)
+	{
+		if (NULL == sc8925_clk_devices[i].dev_name)
+			continue;
+		if (strcmp(id, sc8925_clk_devices[i].dev_name) == 0)
+		{
+			found = 1;
+			break;
+		}
+	}
+
+	if (found)
+		return &sc8925_clk_devices[i].clk;
+	else {
+		printk("ERROR: failed to get device %s from the clock list\n", id);
+		return ERR_PTR(-ENOENT);
+	}
+}
+
+int silan_clk_enable(struct silan_clk *clk)
+{
+	return clk_enable(clk);
+}
+
+void silan_clk_disable(struct silan_clk *clk)
+{
+	clk_disable(clk);
+}
+EXPORT_SYMBOL(silan_clk_get);
+EXPORT_SYMBOL(silan_clk_enable);
+EXPORT_SYMBOL(silan_clk_disable);
+
 #define to_silan_clkdev(_hw) container_of(_hw, struct silan_clk_device, hw)
 
 static int silan_enable(struct clk_hw *hw)
