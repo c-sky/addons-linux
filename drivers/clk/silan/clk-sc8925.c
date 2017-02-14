@@ -7,8 +7,423 @@
 #include <linux/module.h>
 #include <linux/platform_device.h>
 
-#define SILAN_LSP_CTRL		0xBFBD7000
-#define SILAN_CR_BASE		0xBFBA9000
+#define	ETH0_MODE_MASK		(0xf << 12)
+#define	ETH1_MODE_MASK		(0xf << 16)
+
+#define	ETH0_RGMII_100M		(0x5 << 12)
+#define	ETH0_RGMII_1000M	(0x6 << 12)
+#define	ETH0_RMII_100M		(0x9 << 12)
+#define	ETH0_RMII_1000M		(0xa << 12)
+#define	ETH0_RMII_100M		(0x9 << 12)
+#define	ETH0_RMII_1000M		(0xa << 12)
+#define ETH0_MII_GMII_100M	(0x1 << 12)
+#define ETH0_MII_GMII_1000M	(0x2 << 12)
+
+#define	ETH1_RGMII_100M		(0x5 << 16)
+#define	ETH1_RGMII_1000M	(0x6 << 16)
+#define	ETH1_RMII_100M		(0x9 << 16)
+#define	ETH1_RMII_1000M		(0xa << 16)
+#define	ETH1_RMII_100M		(0x9 << 16)
+#define	ETH1_RMII_1000M		(0xa << 16)
+#define ETH1_MII_GMII_100M	(0x1 << 16)
+#define ETH1_MII_GMII_1000M	(0x2 << 16)
+
+
+
+/* NOTE: SHOULD SYNCHRONIZED UPDATING WITH KERNEL */
+
+/*BB MODULE*/
+#define SILAN_GPU_BASE					0xBFA00000
+#define SILAN_GPU_PHY_BASE				0x1FA00000
+#define SILAN_GPU_SIZE					0xFFFF
+
+#define SILAN_VPU1_BASE					0xBFA10000
+#define SILAN_VPU1_PHY_BASE				0x1FA10000
+#define SILAN_VPU1_SIZE					0xFFFF
+
+#define SILAN_VPU0_BASE					0xBFA20000
+#define SILAN_VPU0_PHY_BASE				0x1FA20000
+#define SILAN_VPU0_SIZE					0xFFFF
+
+#define SILAN_JPEG_BASE					0xBFA30000
+#define SILAN_JPEG_PHY_BASE				0x1FA30000
+#define SILAN_JPEG_SIZE					0xFFFF
+
+#define SILAN_VPP_BASE					0xBFA40000
+#define SILAN_VPP_PHY_BASE				0x1FA40000
+#define SILAN_VPP_SIZE					0xFFFF
+
+#define SILAN_HDMI_BASE					0xBFA50000
+#define SILAN_HDMI_PHY_BASE				0x1FA50000
+#define SILAN_HDMI_SIZE					0xFFFF
+
+#define SILAN_DEINT_BASE				0xBFA60000
+#define SILAN_DEINT_PHY_BASE			0x1FA60000
+#define SILAN_DEINT_SIZE				0xFFFF
+
+#define SILAN_VIU_BASE					0xBFA70000
+#define SILAN_VIU_PHY_BASE				0x1FA70000
+#define SILAN_VIU_SIZE					0x7FFF
+
+#define SILAN_BBMISC_BASE				0xBFA78000
+#define SILAN_BBMISC_PHY_BASE			0x1FA78000
+#define SILAN_BBMISC_SIZE				0xFFF
+
+#define SILAN_FDIP_BASE					0xBFA79000
+#define SILAN_FDIP_PHY_BASE				0x1FA79000
+#define SILAN_FDIP_SIZE					0x6FFF
+
+/* HSP SubSystem */
+#define SILAN_HOSTUSB_BASE				0xBFA80000
+#define SILAN_HOSTUSB_PHY_BASE			0x1FA80000
+#define SILAN_HOSTUSB_SIZE				0xFFFF
+
+#define SILAN_PXBAR_BASE				0xBFA90000
+#define SILAN_PXBAR_PHY_BASE			0x1FA90000
+#define SILAN_PXBAR_SIZE				0xFFFF
+
+#define SILAN_DMABAR_ARB_BASE			0xBFAA0000
+#define SILAN_DMABAR_ARB_PHY_BASE       0x1FAA0000
+#define SILAN_DMABAR_ARB_SIZE           0xFFF
+
+#define SILAN_I2C5_BASE					0xBFAA3000
+#define SILAN_I2C5_PHY_BASE             0x1FAA3000
+#define SILAN_I2C5_SIZE                 0xFFF
+
+#define SILAN_I2C4_BASE					0xBFAA4000
+#define SILAN_I2C4_PHY_BASE             0x1FAA4000
+#define SILAN_I2C4_SIZE                 0xFFF
+
+#define SILAN_UART5_BASE				0xBFAA5000
+#define SILAN_UART5_PHY_BASE			0x1FAA5000
+#define SILAN_UART5_SIZE				0xFFF
+
+#define SILAN_UART6_BASE				0xBFAA6000
+#define SILAN_UART6_PHY_BASE			0x1FAA6000
+#define SILAN_UART6_SIZE				0xFFF
+
+#define SILAN_UART3_BASE				0xBFAA7000
+#define SILAN_UART3_PHY_BASE			0x1FAA7000
+#define SILAN_UART3_SIZE				0xFFF
+
+#define SILAN_UART4_BASE				0xBFAA8000
+#define SILAN_UART4_PHY_BASE			0x1FAA8000
+#define SILAN_UART4_SIZE				0xFFF
+
+#define SILAN_DMAC0_BASE				0xBFAB0000
+#define SILAN_DMAC0_PHY_BASE			0x1FAB0000
+#define SILAN_DMAC0_SIZE				0x7FFF
+
+#define SILAN_OTGUSB_BASE				0xBFAC0000
+#define SILAN_OTGUSB_PHY_BASE			0x1FAC0000
+#define SILAN_OTGUSB_SIZE				0x7FFF
+
+#define SILAN_GMAC1_BASE				0xBFAC8000
+#define SILAN_GMAC1_PHY_BASE			0x1FAC8000
+#define SILAN_GMAC1_SIZE				0x7FFF
+
+#define SILAN_GMAC0_BASE				0xBFAD0000
+#define SILAN_GMAC0_PHY_BASE			0x1FAD0000
+#define SILAN_GMAC0_SIZE				0x7FFF
+
+#define SILAN_GMAC_SRAM_BASE			0xBFAD8000
+#define SILAN_GMAC_SRAM_PHY_BASE		0x1FAD8000
+#define SILAN_GMAC_SRAM_SIZE			0x7FFF
+
+#define SILAN_SD_BASE					0xBFAE0000
+#define SILAN_SD_PHY_BASE				0x1FAE0000
+#define SILAN_SD_SIZE					0xFFF
+
+#define SILAN_MMC_BASE					0xBFAE1000
+#define SILAN_MMC_PHY_BASE				0x1FAE1000
+#define SILAN_MMC_SIZE					0xFFF
+
+#define SILAN_SDIO_BASE					0xBFAE2000
+#define SILAN_SDIO_PHY_BASE				0x1FAE2000
+#define SILAN_SDIO_SIZE					0xFFF
+
+#define SILAN_SSP_BASE					0xBFAE3000
+#define SILAN_SSP_PHY_BASE				0x1FAE3000
+#define SILAN_SSP_SIZE					0xFFF
+
+#define SILAN_SPI_NORMAL_BASE			0xBFAE4000
+#define SILAN_SPI_NORMAL_PHY_BASE		0x1FAE4000
+#define SILAN_SPI_NORMAL_SIZE			0xFFF
+
+#define SILAN_HSPMISC_BASE				0xBFAE5000
+#define SILAN_HSPMISC_PHY_BASE			0x1FAE5000
+#define SILAN_HSPMISC_SIZE				0xFFF
+
+/* SDRAM SubSystem */
+#define SILAN_SDRAM_BASE				0xBFAF0000
+#define SILAN_SDRAM_PHY_BASE			0x1FAF0000
+#define SILAN_SDRAM_SIZE				0xFFFF
+
+/* IVS SubSystem */
+#define SILAN_MPU_BASE					0xBFB00000
+#define SILAN_MPU_PHY_BASE              0x1FB00000
+#define SILAN_MPU_SIZE					0x1FFFF
+
+#define SILAN_VENC_BASE					0xBFB20000
+#define SILAN_VENC_PHY_BASE				0x1FB20000
+#define SILAN_VENC_SIZE					0xFFFF
+
+#define SILAN_VPRE_BASE					0xBFB30000
+#define SILAN_VPRE_PHY_BASE				0x1FB30000
+#define SILAN_VPRE_SIZE					0xFFFF
+
+#define SILAN_DSP1_BASE					0xBFB40000
+#define SILAN_DSP1_PHY_BASE				0x1FB40000
+#define SILAN_DSP1_SIZE					0xFFFF
+
+#define SILAN_ISP_BASE					0xBFB50000
+#define SILAN_ISP_PHY_BASE				0x1FB50000
+#define SILAN_ISP_SIZE					0xFFFF
+
+#define SILAN_CCU_BASE					0xBFB60000
+#define SILAN_CCU_PHY_BASE				0x1FB60000
+#define SILAN_CCU_SIZE					0x7FFF
+
+#define SILAN_IVS_MISC_BASE				0xBFB68000
+#define SILAN_IVS_MISC_PHY_BASE			0x1FB68000
+#define SILAN_IVS_MISC_SIZE				0x7FFF
+
+#define SILAN_IVS_VDSP_BASE				0xBFB70000
+#define SILAN_IVS_VDSP_PHY_BASE			0x1FB70000
+#define SILAN_IVS_VDSP_SIZE				0xFFFF
+
+/* MEM SubSystem */
+#define SILAN_DDR_BASE					0xBFB90000
+#define SILAN_DDR_PHY_BASE				0x1FB90000
+#define SILAN_DDR_SIZE					0xFFF
+
+#define SILAN_MEMMISC_BASE				0xBFB91000
+#define SILAN_MEMMISC_PHY_BASE			0x1FB91000
+#define SILAN_MEMMISC_SIZE				0xFFF
+
+#define SILAN_DDR1_BASE					0xBFBE0000
+#define SILAN_DDR1_PHY_BASE				0x1FBE0000
+#define SILAN_DDR1_SIZE					0x3FFF
+
+#define SILAN_MEMMISC1_BASE				0xBFBE4000
+#define SILAN_MEMMISC1_PHY_BASE			0x1FBE4000
+#define SILAN_MEMMISC1_SIZE				0x1FFF
+
+/*MISC SubSystem*/
+#define SILAN_UPT_BASE					0xBFBA0000
+#define SILAN_UPT_PHY_BASE				0x1FBA0000
+#define SILAN_UPT_SIZE					0xFFF
+
+#define SILAN_SPT_BASE					0xBFBA1000
+#define SILAN_SPT_PHY_BASE				0x1FBA1000
+#define SILAN_SPT_SIZE					0xFFF
+
+#define SILAN_ACODEC_BASE				0xBFBA2000
+#define SILAN_ACODEC_PHY_BASE			0x1FBA2000
+#define SILAN_ACODEC_SIZE				0xFFF
+
+#define SILAN_VDAC_BASE					0xBFBA3000
+#define SILAN_VDAC_PHY_BASE				0x1FBA3000
+#define SILAN_VDAC_SIZE					0xFFF
+
+#define SILAN_CR_BASE					0xBFBA9000
+#define SILAN_CR_PHY_BASE				0x1FBA9000
+#define SILAN_CR_SIZE					0xFFF
+
+/*LSP MODULE*/
+#define SILAN_SPIM_BASE					0xBFBB0000 /* SPI 4Bit MEM */
+#define SILAN_SPIM_PHY_BASE				0x1FBB0000
+#define SILAN_SPIM_SIZE					0xFFFF
+
+#define SILAN_UART1_BASE				0xBFBC0000
+#define SILAN_UART1_PHY_BASE			0x1FBC0000
+#define SILAN_UART1_SIZE				0xFFF
+
+#define SILAN_UART7_BASE				0xBFBC1000
+#define SILAN_UART7_PHY_BASE			0x1FBC1000
+#define SILAN_UART7_SIZE				0xFFF
+
+#define SILAN_WDT_SUB_BASE				0xBFBC2000
+#define SILAN_WDT_SUB_PHY_BASE			0x1FBC2000
+#define SILAN_WDT_SUB_SIZE				0xFFF
+
+#define SILAN_UART2_BASE				0xBFBC3000
+#define SILAN_UART2_PHY_BASE			0x1FBC3000
+#define SILAN_UART2_SIZE				0xFFF
+
+#define SILAN_SPI_BASE					0xBFBC4000
+#define SILAN_SPI_PHY_BASE				0x1FBC4000
+#define SILAN_SPI_SIZE					0xFFF
+
+#define SILAN_I2C1_BASE					0xBFBC5000
+#define SILAN_I2C1_PHY_BASE				0x1FBC5000
+#define SILAN_I2C1_SIZE					0xFFF
+
+#define SILAN_WDG_BASE					0xBFBC6000
+#define SILAN_WDG_PHY_BASE				0x1FBC6000
+#define SILAN_WDG_SIZE					0xFFF
+
+#define SILAN_LSP_TIMER_BASE			0xBFBC7000
+#define SILAN_LSP_TIMER_PHY_BASE		0x1FBC7000
+#define SILAN_LSP_TIMER_SIZE			0xFFF
+
+#define SILAN_GPIO1_BASE				0xBFBC8000
+#define SILAN_GPIO1_PHY_BASE			0x1FBC8000
+#define SILAN_GPIO1_SIZE				0xFFF
+
+#define SILAN_PWM_BASE					0xBFBC9000
+#define SILAN_PWM_PHY_BASE				0x1FBC9000
+#define SILAN_PWM_SIZE					0xFFF
+
+#define SILAN_SCI_BASE					0xBFBCA000
+#define SILAN_SCI_PHY_BASE				0x1FBCA000
+#define SILAN_SCI_SIZE					0xFFF
+
+#define SILAN_CAN_BASE					0xBFBCB000
+#define SILAN_CAN_PHY_BASE				0x1FBCB000
+#define SILAN_CAN_SIZE					0xFFF
+
+#define SILAN_GPIO2_BASE				0xBFBCC000
+#define SILAN_GPIO2_PHY_BASE			0x1FBCC000
+#define SILAN_GPIO2_SIZE				0xFFF
+
+#define SILAN_I2C2_BASE					0xBFBCD000
+#define SILAN_I2C2_PHY_BASE				0x1FBCD000
+#define SILAN_I2C2_SIZE					0xFFF
+
+#define SILAN_GPIO3_BASE				0xBFBCE000
+#define SILAN_GPIO3_PHY_BASE			0x1FBCE000
+#define SILAN_GPIO3_SIZE				0xFFF
+
+#define SILAN_GPIO4_BASE				0xBFBCF000
+#define SILAN_GPIO4_PHY_BASE			0x1FBCF000
+#define SILAN_GPIO4_SIZE				0xFFF
+
+#define SILAN_GPIO5_BASE				0xBFBD0000
+#define SILAN_GPIO5_PHY_BASE			0x1FBD0000
+#define SILAN_GPIO5_SIZE				0xFFF
+
+#define SILAN_ADC_BASE					0xBFBD1000
+#define SILAN_ADC_PHY_BASE				0x1FBD1000
+#define SILAN_ADC_SIZE					0xFFF
+
+#define SILAN_EFUSE_BASE				0xBFBD3000
+#define SILAN_EFUSE_PHY_BASE			0x1FBD3000
+#define SILAN_EFUSE_SIZE				0xFFF
+
+#define SILAN_RTC_BASE					0xBFBD4000
+#define SILAN_RTC_PHY_BASE				0x1FBD4000
+#define SILAN_RTC_SIZE					0xFFF
+
+#define SILAN_I2C3_BASE					0xBFBD5000
+#define SILAN_I2C3_PHY_BASE				0x1FBD5000
+#define SILAN_I2C3_SIZE					0xFFF
+
+#define SILAN_GPIO6_BASE				0xBFBD6000
+#define SILAN_GPIO6_PHY_BASE			0x1FBD6000
+#define SILAN_GPIO6_SIZE				0xFFF
+
+#define SILAN_LSPMISC_BASE				0xBFBD7000
+#define SILAN_LSPMIC_PHY_BASE			0x1FBD7000
+#define SILAN_LSPMIC_SIZE				0x8FFF
+
+/* SEC SubSystem*/
+#define SILAN_OTP_BASE                  0xBFBE8000
+#define SILAN_OTP_PHY_BASE              0x1FBE8000
+#define SILAN_OTP_SIZE                  0xFFF
+
+#define SILAN_AR_BASE					0xBFBE9000
+#define SILAN_AR_PHY_BASE				0x1FBE9000
+#define SILAN_AR_SIZE					0xFFF
+
+#define SILAN_PMU_BASE                  0xBFBEB000
+#define SILAN_PMU_PHY_BASE              0x1FBEB000
+#define SILAN_PMU_SIZE                  0xFFF
+
+#define SILAN_IVS_CXC_BASE              0xBFBEC000
+#define SILAN_IVS_CXC_PHY_BASE          0x1FBEC000
+#define SILAN_IVS_CXC_SIZE              0xFFF
+
+#define SILAN_IVS_ICTL_BASE             0xBFBED000
+#define SILAN_IVS_ICTL_PHY_BASE         0x1FBED000
+#define SILAN_IVS_ICTL_SIZE             0x1FFF
+
+#define SILAN_BOOTRAM_BASE             0xBFC00000
+#define SILAN_BOOTRAM_PHY_BASE         0x1FC00000
+#define SILAN_BOOTRAM_SIZE             0x3FFF
+
+/* Audio */
+#define SILAN_CXC_BASE					0xBFC10000
+#define SILAN_CXC_PHY_BASE				0x1FC10000
+#define SILAN_CXC_SIZE					0xFFF
+
+#define SILAN_DMAC1_BASE				0xBFC11000
+#define SILAN_DMAC1_PHY_BASE			0x1FC11000
+#define SILAN_DMAC1_SIZE				0xFFF
+
+#define SILAN_I2ST4_BASE				0xBFC12000
+#define SILAN_I2ST4_PHY_BASE			0x1FC12000
+#define SILAN_I2ST4_SIZE				0xFFF
+
+#define SILAN_I2SHDMI_BASE				0xBFC13000
+#define SILAN_I2SHDMI_PHY_BASE			0x1FC13000
+#define SILAN_I2SHDMI_SIZE				0xFFF
+
+#define SILAN_I2SMIC_BASE				0xBFC14000
+#define SILAN_I2SMIC_PHY_BASE			0x1FC14000
+#define SILAN_I2SMIC_SIZE				0xFFF
+
+#define SILAN_SPDIF_BASE				0xBFC15000
+#define SILAN_SPDIF_PHY_BASE			0x1FC15000
+#define SILAN_SPDIF_SIZE				0xFFF
+
+#define SILAN_AUDIU_TIMER_BASE			0xBFC17000
+#define SILAN_AUDIO_TIMER_PHY_BASE		0x1FC17000
+#define SILAN_AUDIO_TIMER_SIZE			0xFFF
+
+#define SILAN_DSP0_BASE					0xBFC18000
+#define SILAN_DSP0_PHY_BASE				0x1FC18000
+#define SILAN_DSP0_SIZE					0xFFF
+
+#define SILAN_AUDIO_ICTL_BASE			0xBFC19000
+#define SILAN_AUDIO_ICTL_PHY_BASE		0x1FC19000
+#define SILAN_AUDIO_ICTL_SIZE			0xFFF
+
+#define SILAN_SPDIF_IN_BASE				0xBFC1A000
+#define SILAN_SPDIF_IN_PHY_BASE			0x1FC1A000
+#define SILAN_SPDIF_IN_SIZE				0xFFF
+
+/* SECDMX */
+#define SILAN_SECDMX_DMAC_BASE			0xBFC20000
+#define SILAN_SECDMX_DMAC_PHY_BASE		0x1FC20000
+#define SILAN_SECDMX_DMAC_SIZE			0xFFFF
+
+#define SILAN_DRM_BASE					0xBFC30000
+#define SILAN_DRM_PHY_BASE				0x1FC30000
+#define SILAN_DRM_SIZE					0xFFF
+
+#define SILAN_BUF_CTRL_BASE				0xBFC36000
+#define SILAN_BUF_CTRL_PHY_BASE			0x1FC36000
+#define SILAN_BUF_CTRL_SIZE				0x1FFF
+
+#define SILAN_TS_DMX_BASE				0xBFC38000
+#define SILAN_TS_DMX_PHY_BASE			0x1FC38000
+#define SILAN_TS_DMX_SIZE				0x7FFF
+
+/* SPU (CK810) */
+#define SILAN_ICTL_BASE					0xBFCB0000 /* SPU_ICTL */
+#define SILAN_ICTL_PHY_BASE				0x1FCB0000
+#define SILAN_ICTL_SIZE					0xFFF
+
+#define SILAN_SPU_TIMER_BASE			0xBFCB1000
+#define SILAN_SPU_TIMER_PHY_BASE		0x1FCB1000
+#define SILAN_SPU_TIMER_SIZE			0xFFF
+
+/* Cortex-M0 */
+#define SILAN_CM0_CXC_BASE              0xBFBEA000
+#define SILAN_CM0_CXC_PHY_BASE          0x1FBEA000
+#define SILAN_CM0_CXC_SIZE              0xFFF
+
 
 /* System  Control Register */
 #define SILAN_SYS_REG0		SILAN_CR_BASE
@@ -60,6 +475,67 @@
 #define SILAN_SYS_REG46         (SILAN_CR_BASE + 0xb8)
 #define SILAN_SYS_REG47         (SILAN_CR_BASE + 0xbc)
 #define SILAN_SYS_REG48         (SILAN_CR_BASE + 0xc0)
+
+/*
+ * LSP Misc
+ */
+#define SILAN_LSP_CTRL				SILAN_LSPMISC_BASE
+
+/*
+ * PMU
+ */
+/* PMU configure register */
+#define SILAN_PMU_CFG				SILAN_PMU_BASE
+/* PLL configure register low */
+#define SILAN_PMU_PLL_CFG_L			(SILAN_PMU_BASE + 0x04)
+/* PLL configure register high */
+#define SILAN_PMU_PLL_CFG_H			(SILAN_PMU_BASE + 0x08)
+/* PMU external interrupt mask register */
+#define SILAN_PMU_INT_MASK_CFG		(SILAN_PMU_BASE + 0x0c)
+/* PMU external interrupt polarity register */
+#define SILAN_PMU_INT_POLAR_CFG		(SILAN_PMU_BASE + 0x10)
+/* PMU external interrupt configuration register */
+#define SILAN_PMU_INT_CFG			(SILAN_PMU_BASE + 0x14)
+/* PMU interrupt status register */
+#define SILAN_PMU_INT_STATUS		(SILAN_PMU_BASE + 0x18)
+/* PMU external interrupt level count register */
+#define SILAN_PMU_INT_LEVEL_CNT_CFG	(SILAN_PMU_BASE + 0x1c)
+/* PMU status register */
+#define SILAN_PMU_STATUS			(SILAN_PMU_BASE + 0x20)
+/* PLL status register low */
+#define SILAN_PMU_PLL_STATUS_L		(SILAN_PMU_BASE + 0x24)
+/* PLL status register high */
+#define SILAN_PMU_PLL_STATUS_H		(SILAN_PMU_BASE + 0x28)
+/* PMU state change wait count register */
+#define SILAN_PMU_WAIT_CNT			(SILAN_PMU_BASE + 0x2c)
+
+/*
+ * SEC_AR
+ */
+#define SILAN_MEM0_REGION0_START	(SILAN_AR_BASE + 0x18)
+#define SILAN_MEM0_REGION0_END		(SILAN_AR_BASE + 0x1c)
+
+#define SILAN_MEM0_REGION1_START	(SILAN_AR_BASE + 0x20)
+#define SILAN_MEM0_REGION1_END		(SILAN_AR_BASE + 0x24)
+
+#define SILAN_MEM1_REGION0_START	(SILAN_AR_BASE + 0x30)
+#define SILAN_MEM1_REGION0_END		(SILAN_AR_BASE + 0x34)
+
+#define SILAN_MEM1_REGION1_START	(SILAN_AR_BASE + 0x38)
+#define SILAN_MEM1_REGION1_END		(SILAN_AR_BASE + 0x3c)
+
+#define SILAN_AR_STATUS				(SILAN_AR_BASE + 0x40)
+#define SILAN_AR_PHY_STATUS			(SILAN_AR_PHY_BASE + 0x40)
+
+#define SILAN_HSPMISC_ENDIAN		(SILAN_HSPMISC_BASE + 0x4)
+#define SILAN_HSPMISC_PHY_ENDIAN	(SILAN_HSPMISC_PHY_BASE + 0x4)
+
+/*
+ * audio subsystem
+ */
+
+#define SILAN_I2S_BIND_HDMI_SELECT	(SILAN_DSP0_BASE + 0x80)
+
 
 
 #define CLK_ID_NUM	3
@@ -826,6 +1302,7 @@ static int clk_enable(struct silan_clk *clk)
 			reg_value = sl_readl(SILAN_SYS_REG0 + (4 * reg_offset));
 			reg_value |= (0x1 << bit_offset);
 			sl_writel(reg_value, SILAN_SYS_REG0 + (4 * reg_offset));
+			printk("%s: clk_id[i]:%x, reg_value: %x.\n", __func__, clk->clk_id[i], reg_value);
 		}
 		if (0 == i) {
 			spin_unlock(&clocks_lock);
@@ -2095,7 +2572,7 @@ static int silan_enable(struct clk_hw *hw)
 
 	if (clk_dev->clk.enable) {
 		clk_dev->clk.enable(&clk_dev->clk);
-		printk("%s, %d.\n", __func__, __LINE__);
+		printk("%s, %s.\n", __func__, clk_dev->dev_name);
 	}
 	return 0;
 }
@@ -2107,8 +2584,8 @@ static void silan_disable(struct clk_hw *hw)
 	clk_dev = to_silan_clkdev(hw);
 
 	if (clk_dev->clk.disable) {
+		printk("%s, %s.\n", __func__, clk_dev->dev_name);
 		clk_dev->clk.disable(&clk_dev->clk);
-		printk("%s, %d.\n", __func__, __LINE__);
 	}
 }
 
@@ -2181,3 +2658,125 @@ static void __init sc8925_init(struct device_node *np)
 }
 CLK_OF_DECLARE(slian_sc8925_clk, "silan,sc8925-clk", sc8925_init);
 
+//#define CONFIG_SILAN_ETH0
+//#define CONFIG_SILAN_ETH0_RMII_MODE
+
+#undef readl
+#undef writel
+#define readl sl_readl
+#define writel sl_writel
+void silan_mac0_mode_init(void)
+{
+	unsigned int regval;
+	unsigned int value = readl(SILAN_SYS_REG16);
+
+	regval = readl(SILAN_HSPMISC_ENDIAN);
+	regval &= (~ETH0_MODE_MASK);
+#ifdef CONFIG_SILAN_ETH0_RGMII_MODE
+	// gmac0 tx delay chain
+	//value |= 1 << 16;
+	value &= ~(0xf << 12) ;
+	value |= (0xf << 12);
+
+	//gmac0 rx delay chain
+	value |= 1 << 21;
+	value &= ~(0xf << 17) ;
+	value |= (0x0 << 17);
+
+	regval |= ETH0_RGMII_100M;
+#elif defined (CONFIG_SILAN_ETH0_RMII_MODE)
+	regval |= ETH0_RMII_100M;
+#elif defined (CONFIG_SILAN_ETH0_MII_GMII_MODE)
+	regval |= ETH0_MII_GMII_100M;
+#endif
+	writel(regval, SILAN_HSPMISC_ENDIAN);
+	writel(value, SILAN_SYS_REG16);
+
+}
+
+void silan_mac1_mode_init(void)
+{
+	unsigned int regval;
+	unsigned int value = readl(SILAN_SYS_REG16);
+
+	regval = readl(SILAN_HSPMISC_ENDIAN);
+	regval &= (~ETH1_MODE_MASK);
+#ifdef CONFIG_SILAN_ETH1_RGMII_MODE
+	// gmac1 tx delay chain
+	//	value |= 1 << 26;
+	value &= ~(0xf << 22) ;
+	value |= (0xf << 22);
+
+	//gmac1 rx delay chain
+//	value |= 1 << 31;
+	value &= ~(0xf << 27) ;
+	value |= (0x8 << 27);
+
+	regval |= ETH1_RGMII_100M;
+#elif defined (CONFIG_SILAN_ETH1_RMII_MODE)
+	regval |= ETH1_RMII_100M;
+#elif defined (CONFIG_SILAN_ETH1_MII_GMII_MODE)
+	// gmac1 tx delay chain
+	value &= ~(0xf << 22) ;
+	value |= (0x3 << 22);
+	regval |= ETH1_MII_GMII_1000M;
+#endif
+	writel(regval, SILAN_HSPMISC_ENDIAN);
+	writel(value, SILAN_SYS_REG16);
+
+}
+
+void silan_emmc_phase_init(void)
+{
+	unsigned int regval;
+
+	regval = readl(SILAN_SYS_REG29);
+	regval |= (1 << 19);
+	regval |= (1 << 30);
+	writel(regval, SILAN_SYS_REG29);
+
+}
+
+void silan_sd_phase_init(void)
+{
+	unsigned int regval;
+
+	regval = readl(SILAN_SYS_REG29);
+	regval |= (1 << 18);
+	regval |= (1 << 25);
+//	regval &= ~(1 << 25);
+
+
+	regval &= ~(0xf << 21);
+	regval |= (0xf << 21);
+	writel(regval, SILAN_SYS_REG29);
+
+//	regval = readl(SILAN_SYS_REG3);
+//	regval |= (1 << 8);
+//	writel(regval, SILAN_SYS_REG3);
+}
+
+static int __init silan_device_preinit(void)
+{
+
+#ifdef CONFIG_SILAN_ETH0
+	silan_mac0_mode_init();
+#endif
+#ifdef CONFIG_SILAN_ETH1
+	silan_mac1_mode_init();
+#endif
+#ifdef CONFIG_USB_SUPPORT
+	//usb_host_board_init();
+	//usb_otg_board_init();
+#endif
+#ifdef CONFIG_SILAN_EMMC
+	silan_emmc_phase_init();
+#endif
+#ifdef CONFIG_SILAN_SD
+	silan_sd_phase_init();
+#endif
+
+
+	return 0;
+}
+device_initcall(silan_device_preinit);
