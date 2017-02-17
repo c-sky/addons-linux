@@ -1,5 +1,7 @@
 tar jtag jtag://127.0.0.1:1025
 
+reset
+
 set $cr18=0x7d
 
 # pass devicetree blob
