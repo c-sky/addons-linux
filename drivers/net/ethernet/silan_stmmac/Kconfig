@@ -1,5 +1,6 @@
 config STMMAC_ETH
 	tristate "STMicroelectronics 10/100/1000 Ethernet driver"
+	default n
 	select MII
 	select PHYLIB
 	select CRC32
@@ -17,7 +18,7 @@ if STMMAC_ETH
 config SILAN_ETH0
     bool "Silan 10/100/1000 Ethernet0 driver"
 	select SILAN_ETH
-    default y
+    default n
 
 choice
 	prompt "Silan Ethernet0 Mode"
@@ -40,7 +41,7 @@ endchoice
 config SILAN_ETH1
     bool "Silan 10/100/1000 Ethernet1 driver"
 	select SILAN_ETH
-    default y
+    default n
 
 choice
 	prompt "Silan Ethernet1 Mode"
