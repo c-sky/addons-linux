@@ -13,7 +13,7 @@ config SILAN_STMMAC_ETH
 config SILAN_ETH
     bool
 
-if STMMAC_ETH
+if SILAN_STMMAC_ETH
 
 config SILAN_ETH0
     bool "Silan 10/100/1000 Ethernet0 driver"
@@ -108,7 +108,7 @@ config STMMAC_DA
 config STMMAC_DUAL_MAC
 	bool "STMMAC: dual mac support (EXPERIMENTAL)"
 	default n
-        depends on EXPERIMENTAL && STMMAC_ETH && !STMMAC_TIMER
+        depends on EXPERIMENTAL && SILAN_STMMAC_ETH && !STMMAC_TIMER
 	help
 	  Some ST SoCs (for example the stx7141 and stx7200c2) have two
 	  Ethernet Controllers. This option turns on the second Ethernet
