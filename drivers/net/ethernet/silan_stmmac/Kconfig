@@ -1,4 +1,4 @@
-config STMMAC_ETH
+config SILAN_STMMAC_ETH
 	tristate "STMicroelectronics 10/100/1000 Ethernet driver"
 	default n
 	select MII

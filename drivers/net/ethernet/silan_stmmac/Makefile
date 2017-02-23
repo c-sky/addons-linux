@@ -1,4 +1,4 @@
-obj-$(CONFIG_STMMAC_ETH) += stmmac.o
+obj-$(CONFIG_SILAN_STMMAC_ETH) += stmmac.o
 stmmac-$(CONFIG_STMMAC_TIMER) += stmmac_timer.o
 stmmac-$(CONFIG_SILAN_ETH) += stmmac_main.o
 stmmac-objs:=stmmac_ethtool.o stmmac_mdio.o \
