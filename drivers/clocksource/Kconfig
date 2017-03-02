@@ -1,8 +1,0 @@
-menu "Clock Source drivers (in addons)"
-
-config NATIONALCHIP_TIMER
-	bool "nationalchip timer"
-	select CLKSRC_MMIO
-	select CLKSRC_OF
-	default n
-endmenu
