@@ -1,0 +1,1 @@
+obj-$(CONFIG_SILAN_SC6138A_TIMER) += timer-sc6138a.o

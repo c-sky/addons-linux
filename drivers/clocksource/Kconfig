@@ -1,0 +1,8 @@
+menu "Clock Source drivers (in addons)"
+
+config SILAN_SC6138A_TIMER
+	bool "silan sc6138a timer"
+	select CLKSRC_MMIO
+	select CLKSRC_OF
+	default n
+endmenu

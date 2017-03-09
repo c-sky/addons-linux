@@ -1,0 +1,8 @@
+menu "irqchip drivers (in addons)"
+
+config SILAN_SC6138A_IRQ
+	bool "silan sc6138a irq"
+	select ARM_AMBA
+	default n
+
+endmenu

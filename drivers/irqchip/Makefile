@@ -1,0 +1,1 @@
+obj-$(CONFIG_SILAN_SC6138A_IRQ)	+= irq-sc6138a.o
