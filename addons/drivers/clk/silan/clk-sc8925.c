@@ -1283,7 +1283,7 @@ static int clk_enable(struct silan_clk *clk)
 		reg_value |= (0x1 << 0);
 		sl_writel(reg_value, SILAN_LSP_CTRL);
 	} else if (SILAN_CLK_TIMER == clk->clk_id[0]) {
-#if 0 // have a hardware bug
+#if 1 // have a hardware bug
 		reg_value = sl_readl(SILAN_LSPMISC_BASE);
 		reg_value |= (0x3 << 1);
 		sl_writel(reg_value, SILAN_LSPMISC_BASE);
