@@ -1,0 +1,6 @@
+config CSKYMAC
+	tristate "CSKY mac 10/100baseT support"
+	default n
+	help
+	  If you are configing a CSKY product and wanting to surport net,
+	  select this option to make your hardware be drived.
