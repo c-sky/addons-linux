@@ -615,6 +615,7 @@ static int cskymac_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	return 0;
 }
 
+#if 0
 static void cskymac_set_multicast(struct net_device *dev)
 {
 	struct cskymac	*dp = (struct cskymac *)netdev_priv(dev);
@@ -684,6 +685,7 @@ static void cskymac_set_multicast(struct net_device *dev)
 	tmp |= CKMAC_MODE_RXEN;
 	CKMAC_REG_BASEADDR[CKMAC_MODE] = tmp;
 }
+#endif
 
 static struct net_device_stats *cskymac_get_stats(struct net_device *dev)
 {

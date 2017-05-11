@@ -1,1 +1,1 @@
-obj-$(CONFIG_CSKYMAC) += stmmac.o
+obj-$(CONFIG_CSKYMAC) += cskymac.o
