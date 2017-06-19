@@ -1,0 +1,5 @@
+menu "Support for frame buffer devices"
+
+source addons/drivers/video/fbdev/nationalchip/Kconfig
+
+endmenu

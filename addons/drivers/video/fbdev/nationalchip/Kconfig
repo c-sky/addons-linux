@@ -1,0 +1,4 @@
+config FB_NATIONALCHIP
+	bool "Nationalchip framebuffer"
+	depends on FB
+
