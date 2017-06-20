@@ -11,7 +11,7 @@
 #include "3201.h"
 
 static __u32 xres = 1280;
-static __u32 yres = 720;
+static __u32 yres = 680;
 static __u32 bits_per_pixel = 16;
 
 static int __init ncfb_vpu_parse(char *p)

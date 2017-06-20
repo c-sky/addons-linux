@@ -1624,8 +1624,8 @@ static int gx3201osd_main_surface(struct fb_info *info)
 	printk("%s,byte_seq: %x.\n", __func__, byte_seq);
 
 	REG_SET_FIELD(&(gx3201vpu_reg->rBUFF_CTRL2),0x7FF<<0,request_block,0);
-	VPU_OSD_SET_WIDTH(gx3201osd_head_ptr->word3, rect.x, rect.width + rect.x - 1);
-	VPU_OSD_SET_HEIGHT(gx3201osd_head_ptr->word4, rect.y, rect.height + rect.y - 1);
+	VPU_OSD_SET_WIDTH(gx3201osd_head_ptr->word3, 32, rect.width + rect.x - 1);
+	VPU_OSD_SET_HEIGHT(gx3201osd_head_ptr->word4, 0, rect.height + rect.y - 1);
 	VPU_OSD_SET_POSITION(gx3201vpu_reg->rOSD_POSITION, rect.x, rect.y);
 
 	palette_buffer[1] = 0xff00ff00;
@@ -1672,38 +1672,7 @@ int gx3201_fbinit(struct fb_info *info) {
 			printk(KERN_ERR "%s, ioremap failed.\n", __func__);
 			return -ENOMEM;
 		}
-
-		gx3201svpu_reg = ioremap(0x04900000, sizeof(*gx3201svpu_reg));
-		if (!gx3201svpu_reg) {
-			printk(KERN_ERR "%s, ioremap failed.\n", __func__);
-			return -ENOMEM;
-		}
-
-		vpu_vout_base_addr = ioremap(0x04804000, 0x1000);
-		if (!vpu_vout_base_addr) {
-			printk(KERN_ERR "%s, ioremap failed.\n", __func__);
-			return -ENOMEM;
-		}
-
-		svpu_vout_base_addr = ioremap(0x04904000, 0x1000);
-		if (!svpu_vout_base_addr) {
-			printk(KERN_ERR "%s, ioremap failed.\n", __func__);
-			return -ENOMEM;
-		}
-
-		gx3201_config_reg = ioremap(0x0030a000, 0x1000);
-		if (!gx3201_config_reg) {
-			printk(KERN_ERR "%s, ioremap failed.\n", __func__);
-			return -ENOMEM;
-		}
 	}
-	printk("ncfb io addr:%p, %p, %p, %p, %p.\n", gx3201vpu_reg, gx3201svpu_reg, vpu_vout_base_addr, svpu_vout_base_addr, gx3201_config_reg);
-	if (info->var.xres <= 1280) 
-		pre_init(G_PAL, G_YPBPR_HDMI_720P_50HZ);
-	else 
-		pre_init(G_PAL, G_YPBPR_HDMI_1080I_50HZ);
-
-	vpu_svpu_hdmi_init();
 
 	ret = gx3201osd_main_surface(info);
 

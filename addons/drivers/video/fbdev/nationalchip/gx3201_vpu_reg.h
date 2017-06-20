@@ -389,6 +389,7 @@ enum {
 			REG_SET_BIT(&(reg), bVPU_RW_BYTESEQ_HIGH);\
 		else\
 			REG_CLR_BIT(&(reg), bVPU_RW_BYTESEQ_HIGH);\
+		REG_SET_FIELD(&(reg), 0x7<<12, byte_seq&0x7, 12);\
 	}while(0)
 #endif
 
