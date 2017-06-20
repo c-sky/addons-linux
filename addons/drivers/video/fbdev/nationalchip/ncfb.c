@@ -8,7 +8,7 @@
 #include <linux/font.h>
 #include <linux/linux_logo.h>
 #include "ncfb.h"
-#include "3201.h"
+#include "gx6605s.h"
 
 static __u32 xres = 1280;
 static __u32 yres = 680;
@@ -78,7 +78,7 @@ int ncfb_blank(int blank, struct fb_info *info)
 int ncfb_pan_display(struct fb_var_screeninfo *var, struct fb_info *info)
 {
 	printk("%s.\n", __func__);
-	gx3201_fbinit(info);
+	gx6605s_fbinit(info);
 	return 0;
 }
 
@@ -88,11 +88,8 @@ static struct fb_ops ncfb_ops = {
 	.fb_imageblit   = cfb_imageblit,
 	.fb_copyarea    = cfb_copyarea,
 	.fb_fillrect    = cfb_fillrect,
-	/* my ops */
-	//.fb_save_state = ncfb_save_state,
-	//.fb_restore_state = ncfb_restore_state,
-	.fb_blank = ncfb_blank,
-	.fb_pan_display = ncfb_pan_display,
+	.fb_blank	= ncfb_blank,
+	.fb_pan_display	= ncfb_pan_display,
 };
 
 extern const struct linux_logo logo_linux_mono;
@@ -271,9 +268,9 @@ static int ncfb_probe(struct platform_device *pdev)
 		return ret;
 	}
 
-	ret = gx3201_fbinit(fbinfo);
+	ret = gx6605s_fbinit(fbinfo);
 	if (ret) {
-		printk(KERN_ERR "nc %s gx3201_fbinit failed: %d.\n", __func__, ret);
+		printk(KERN_ERR "nc %s gx6605s_fbinit failed: %d.\n", __func__, ret);
 		return ret;
 	}
 
@@ -318,7 +315,7 @@ static struct platform_device ncfb_device = {
 
 void ncfb_resume(void)
 {
-	gx3201_fbinit(fbinfo);
+	gx6605s_fbinit(fbinfo);
 }
 
 #ifdef CONFIG_PM
