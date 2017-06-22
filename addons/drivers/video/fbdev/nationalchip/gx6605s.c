@@ -186,7 +186,7 @@ static int gxosd_main_surface(struct fb_info *info)
 	printk("%s,byte_seq: %x.\n", __func__, byte_seq);
 
 	REG_SET_FIELD(&(gxvpu_reg->rBUFF_CTRL2),0x7FF<<0,request_block,0);
-	VPU_OSD_SET_WIDTH(gxosd_head_ptr->word3, 32, rect.width + rect.x - 1);
+	VPU_OSD_SET_WIDTH(gxosd_head_ptr->word3, 64, rect.width + rect.x - 1);
 	VPU_OSD_SET_HEIGHT(gxosd_head_ptr->word4, 0, rect.height + rect.y - 1);
 	VPU_OSD_SET_POSITION(gxvpu_reg->rOSD_POSITION, rect.x, rect.y);
 
