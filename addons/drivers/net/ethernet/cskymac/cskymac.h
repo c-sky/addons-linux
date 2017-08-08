@@ -33,9 +33,9 @@
 //#include <mach/ck_iomap.h>
 //#include <mach/irqs.h>
 
-#define CSKY_MACC_PHYS          0x10006000
-#define CSKY_MAC_BUF_PHYS       0x10007400
-#define CSKY_MAC_IRQ         26
+#define CSKY_MACC_PHYS          0x1fffa000
+#define CSKY_MAC_BUF_PHYS       0x1fffb400
+#define CSKY_MAC_IRQ       4 
 
 
 #ifdef __cplusplus
