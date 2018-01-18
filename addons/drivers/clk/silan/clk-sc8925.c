@@ -6,6 +6,7 @@
 #include <linux/clk-provider.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
+#include <asm/delay.h>
 
 #define	ETH0_MODE_MASK		(0xf << 12)
 #define	ETH1_MODE_MASK		(0xf << 16)
@@ -2720,11 +2721,14 @@ void silan_mac0_mode_init(void)
 	value |= (0x0 << 17);
 
 	regval |= ETH0_RGMII_100M;
+	writel(0x1d, SILAN_SYS_REG49); //RGMII100M IVS3 新版需要
 #elif defined (CONFIG_SILAN_ETH0_RMII_MODE)
 	regval |= ETH0_RMII_100M;
+	writel(regval | 0xd000, SILAN_HSPMISC_ENDIAN);
 #elif defined (CONFIG_SILAN_ETH0_MII_GMII_MODE)
 	regval |= ETH0_MII_GMII_100M;
 #endif
+	udelay(1000);
 	writel(regval, SILAN_HSPMISC_ENDIAN);
 	writel(value, SILAN_SYS_REG16);
 
@@ -2751,12 +2755,14 @@ void silan_mac1_mode_init(void)
 	regval |= ETH1_RGMII_100M;
 #elif defined (CONFIG_SILAN_ETH1_RMII_MODE)
 	regval |= ETH1_RMII_100M;
+	writel(regval | 0xd0000, SILAN_HSPMISC_ENDIAN);
 #elif defined (CONFIG_SILAN_ETH1_MII_GMII_MODE)
 	// gmac1 tx delay chain
 	value &= ~(0xf << 22) ;
 	value |= (0x3 << 22);
 	regval |= ETH1_MII_GMII_1000M;
 #endif
+	udelay(1000);
 	writel(regval, SILAN_HSPMISC_ENDIAN);
 	writel(value, SILAN_SYS_REG16);
 
