@@ -24,6 +24,7 @@
 
 #include <linux/etherdevice.h>
 #include <linux/ethtool.h>
+#include <linux/interrupt.h>
 #include <linux/mii.h>
 #include <linux/phy.h>
 
@@ -122,7 +123,7 @@ static int stmmac_ethtool_getsettings(struct net_device *dev,
 	}
 	cmd->transceiver = XCVR_INTERNAL;
 	spin_lock_irq(&priv->lock);
-	rc = phy_ethtool_gset(phy, cmd);
+	rc = 0;//phy_ethtool_gset(phy, cmd); function not exist
 	spin_unlock_irq(&priv->lock);
 	return rc;
 }
