@@ -7,6 +7,7 @@
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <asm/delay.h>
+#include <asm/reg_ops.h>
 
 #define	ETH0_MODE_MASK		(0xf << 12)
 #define	ETH1_MODE_MASK		(0xf << 16)
@@ -2679,6 +2680,8 @@ sc8925_lookup_clk(struct of_phandle_args *spec, void *data)
 static void __init sc8925_init(struct device_node *np)
 {
 	int i;
+
+	mtcr("cr<31, 15>", 0x26);
 
 	for (i=0; i < ARRAY_SIZE(sc8925_clk_devices); i++) {
 		if (NULL == sc8925_clk_devices[i].dev_name)
